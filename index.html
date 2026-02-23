@@ -6,20 +6,22 @@
     <title>OpenSlaw.ai - Agentic Slaw Intelligence</title>
     <meta name="description" content="The world's first AI-powered open-source coleslaw recipe, autonomously optimized for lobster pairing. Fork it. Ship it. Eat it.">
     <link rel="canonical" href="https://openslaw.ai/">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate" type="application/rss+xml" title="OpenSlaw.ai Release Notes" href="/feed.xml">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://openslaw.ai/">
     <meta property="og:title" content="OpenSlaw.ai - Agentic Slaw Intelligence">
     <meta property="og:description" content="The world's first AI-powered open-source coleslaw recipe, autonomously optimized for lobster pairing. Fork it. Ship it. Eat it.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&h=630&q=80">
+    <meta property="og:image" content="https://openslaw.ai/og-image.png">
     <meta property="og:site_name" content="OpenSlaw.ai">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="OpenSlaw.ai - Agentic Slaw Intelligence">
     <meta name="twitter:description" content="The world's first AI-powered open-source coleslaw recipe, autonomously optimized for lobster pairing. Fork it. Ship it. Eat it.">
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&h=630&q=80">
+    <meta name="twitter:image" content="https://openslaw.ai/og-image.png">
 
     <!-- Additional SEO -->
     <meta name="robots" content="index, follow">
@@ -63,6 +65,13 @@
     }
     </script>
 
+    <!-- Prevent dark mode flash -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -77,6 +86,7 @@
             --green-50: #f0fdf4;
             --green-100: #dcfce7;
             --green-200: #bbf7d0;
+            --green-300: #86efac;
             --green-400: #4ade80;
             --green-500: #22c55e;
             --green-600: #16a34a;
@@ -96,6 +106,40 @@
             --gray-700: #374151;
             --gray-800: #1f2937;
             --gray-900: #111827;
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        /* ── Dark Mode ── */
+        html[data-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --nav-bg: rgba(15, 23, 42, 0.9);
+            --green-50: #052e16;
+            --green-100: #14532d;
+            --green-200: #166534;
+            --green-300: #15803d;
+            --gray-50: #1e293b;
+            --gray-100: #334155;
+            --gray-200: #475569;
+            --gray-300: #64748b;
+            --gray-400: #94a3b8;
+            --gray-500: #cbd5e1;
+            --gray-600: #e2e8f0;
+            --gray-700: #f1f5f9;
+            --gray-800: #f8fafc;
+            --gray-900: #ffffff;
+        }
+
+        html[data-theme="dark"] .photo-credit,
+        html[data-theme="dark"] .hero-image .photo-credit {
+            background: rgba(0, 0, 0, 0.8) !important;
+            color: #94a3b8 !important;
+        }
+
+        html[data-theme="dark"] .photo-credit a {
+            color: #cbd5e1 !important;
         }
 
         html {
@@ -105,7 +149,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--gray-800);
-            background: #ffffff;
+            background: var(--bg);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
@@ -117,7 +161,7 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.85);
+            background: var(--nav-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--gray-200);
@@ -194,10 +238,32 @@
             color: var(--green-700);
         }
 
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            padding: 0.3rem 0.7rem;
+            border-radius: 9999px;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--green-400);
+            color: var(--green-600);
+        }
+
         /* ── Redirect Banner ── */
         .redirect-banner {
             margin-top: 64px;
-            background: linear-gradient(90deg, var(--red-500), var(--red-600));
+            background: linear-gradient(90deg, #ef4444, #dc2626);
             color: white;
             text-align: center;
             padding: 0.6rem 1rem;
@@ -220,7 +286,7 @@
         .hero {
             padding: 6rem 1.5rem 4rem;
             text-align: center;
-            background: linear-gradient(180deg, var(--green-50) 0%, #ffffff 100%);
+            background: linear-gradient(180deg, var(--green-50) 0%, var(--bg) 100%);
         }
 
         .hero-badge {
@@ -281,6 +347,7 @@
             transition: all 0.2s;
             cursor: pointer;
             border: none;
+            font-family: inherit;
         }
 
         .btn-primary {
@@ -296,7 +363,7 @@
         }
 
         .btn-secondary {
-            background: white;
+            background: var(--card-bg);
             color: var(--gray-700);
             border: 1px solid var(--gray-300);
         }
@@ -384,7 +451,7 @@
         }
 
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 1rem;
             border: 1px solid var(--gray-200);
             padding: 2rem;
@@ -399,10 +466,54 @@
             font-weight: 700;
             font-size: 1.1rem;
             color: var(--gray-800);
+            flex-wrap: wrap;
         }
 
         .card-header .icon {
             font-size: 1.25rem;
+        }
+
+        .scaler-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-left: auto;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-500);
+        }
+
+        .scaler-label {
+            margin-right: 0.25rem;
+        }
+
+        .scaler-btn {
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 50%;
+            border: 1px solid var(--gray-300);
+            background: var(--card-bg);
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-family: inherit;
+            line-height: 1;
+        }
+
+        .scaler-btn:hover {
+            border-color: var(--green-400);
+            color: var(--green-600);
+        }
+
+        .scaler-value {
+            font-weight: 700;
+            color: var(--green-600);
+            min-width: 1.25rem;
+            text-align: center;
         }
 
         .ingredient-list {
@@ -467,6 +578,14 @@
             font-weight: 700;
         }
 
+        .recipe-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
         /* ── Features Grid ── */
         .features {
             display: grid;
@@ -476,7 +595,7 @@
         }
 
         .feature-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 0.75rem;
             border: 1px solid var(--gray-200);
             padding: 1.5rem;
@@ -512,6 +631,339 @@
             font-size: 0.88rem;
             color: var(--gray-500);
             line-height: 1.5;
+        }
+
+        /* ── Pricing ── */
+        .pricing-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--green-400);
+            box-shadow: 0 0 0 1px var(--green-400);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -0.7rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--green-600);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .pricing-tier {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--green-600);
+            margin-bottom: 0.75rem;
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--gray-500);
+        }
+
+        .pricing-tagline {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-features li {
+            padding: 0.35rem 0;
+            font-size: 0.88rem;
+            color: var(--gray-600);
+        }
+
+        .pricing-features li::before {
+            content: '\2713  ';
+            color: var(--green-500);
+            font-weight: 700;
+        }
+
+        /* ── Benchmarks ── */
+        .benchmark-legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .legend-color {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 0.2rem;
+            display: inline-block;
+        }
+
+        .benchmarks-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .benchmark-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            align-items: start;
+            gap: 1rem;
+        }
+
+        .benchmark-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            text-align: right;
+            padding-top: 0.2rem;
+        }
+
+        .benchmark-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .benchmark-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .benchmark-bar-fill {
+            height: 1.4rem;
+            border-radius: 0.25rem;
+            min-width: 4px;
+        }
+
+        .benchmark-bar-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+
+        /* ── Testimonials ── */
+        .testimonials-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .testimonial-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .testimonial-card::before {
+            content: '\201C';
+            display: block;
+            font-size: 2.5rem;
+            line-height: 1;
+            color: var(--green-300);
+            font-family: Georgia, 'Times New Roman', serif;
+            margin-bottom: 0.25rem;
+        }
+
+        .testimonial-quote {
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-author {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .testimonial-role {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        /* ── Roadmap ── */
+        .roadmap-timeline {
+            position: relative;
+            padding-left: 2rem;
+            max-width: 640px;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.45rem;
+            top: 0.5rem;
+            bottom: 1rem;
+            width: 2px;
+            background: var(--green-200);
+        }
+
+        .roadmap-item {
+            position: relative;
+            padding-bottom: 1.75rem;
+            padding-left: 1.25rem;
+        }
+
+        .roadmap-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .roadmap-item::before {
+            content: '';
+            position: absolute;
+            left: -1.65rem;
+            top: 0.45rem;
+            width: 0.7rem;
+            height: 0.7rem;
+            background: var(--green-500);
+            border-radius: 50%;
+            border: 2px solid var(--green-200);
+        }
+
+        .roadmap-version {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-600);
+            background: var(--green-50);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin-bottom: 0.25rem;
+        }
+
+        .roadmap-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.15rem;
+        }
+
+        .roadmap-desc {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        /* ── FAQ ── */
+        .faq-list {
+            max-width: 720px;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            text-align: left;
+            font-family: inherit;
+            transition: color 0.2s;
+        }
+
+        .faq-question:hover {
+            color: var(--green-600);
+        }
+
+        .faq-icon {
+            font-size: 1.25rem;
+            transition: transform 0.2s;
+            color: var(--gray-400);
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .faq-item.open .faq-icon {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-answer p {
+            padding: 0 0 1.1rem;
+            font-size: 0.95rem;
+            color: var(--gray-500);
+            line-height: 1.6;
         }
 
         /* ── Changelog ── */
@@ -594,7 +1046,7 @@
         }
 
         .footer-credit a {
-            color: var(--red-500);
+            color: #ef4444;
             text-decoration: none;
             font-weight: 600;
         }
@@ -620,15 +1072,15 @@
         }
 
         .hero-image .photo-credit {
-            background: var(--gray-900);
-            color: var(--gray-400);
+            background: #111827;
+            color: #9ca3af;
             font-size: 0.7rem;
             padding: 0.4rem 1rem;
             text-align: right;
         }
 
         .hero-image .photo-credit a {
-            color: var(--gray-300);
+            color: #d1d5db;
             text-decoration: none;
         }
 
@@ -657,14 +1109,14 @@
             bottom: 0;
             right: 0;
             background: rgba(0, 0, 0, 0.6);
-            color: var(--gray-300);
+            color: #d1d5db;
             font-size: 0.65rem;
             padding: 0.25rem 0.6rem;
             border-top-left-radius: 0.5rem;
         }
 
         .section-image .photo-credit a {
-            color: var(--gray-200);
+            color: #e5e7eb;
             text-decoration: none;
         }
 
@@ -694,20 +1146,81 @@
             bottom: 0;
             right: 0;
             background: rgba(0, 0, 0, 0.6);
-            color: var(--gray-300);
+            color: #d1d5db;
             font-size: 0.65rem;
             padding: 0.25rem 0.6rem;
             border-top-left-radius: 0.5rem;
         }
 
         .image-band .photo-credit a {
-            color: var(--gray-200);
+            color: #e5e7eb;
             text-decoration: none;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #111827;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            max-width: 90vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Cabbage Rain ── */
+        @keyframes cabbage-fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+            85% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(105vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .cabbage-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .cabbage-emoji {
+            position: absolute;
+            top: -5vh;
+            animation: cabbage-fall linear forwards;
         }
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .nav-tagline {
+                display: none;
+            }
+
+            .nav-links a {
                 display: none;
             }
 
@@ -739,6 +1252,24 @@
                 grid-template-columns: 1fr;
             }
 
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            .benchmark-row {
+                grid-template-columns: 1fr;
+            }
+
+            .benchmark-label {
+                text-align: left;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
             .section {
                 padding: 3rem 1.5rem;
             }
@@ -760,12 +1291,60 @@
                 max-width: 280px;
             }
 
+            .recipe-actions .btn {
+                width: auto;
+                max-width: none;
+            }
+
             .stats {
                 gap: 1rem;
             }
 
             .stat-value {
                 font-size: 1.5rem;
+            }
+
+            .scaler-controls {
+                margin-left: 0;
+                margin-top: 0.25rem;
+                width: 100%;
+            }
+        }
+
+        /* ── Print ── */
+        @media print {
+            nav, .redirect-banner, .hero-image, .image-band,
+            .hero-actions, .stats, .section-image,
+            .theme-toggle, .scaler-controls, .recipe-actions,
+            .pricing-section, .benchmarks-section,
+            .testimonials-section, .roadmap-section,
+            .faq-section, .toast, .hero-badge, footer {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .hero {
+                padding: 1rem 1.5rem !important;
+                background: none !important;
+            }
+
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                break-inside: avoid;
+            }
+
+            .recipe-section {
+                border: none !important;
+                background: none !important;
+            }
+
+            .section {
+                padding: 1.5rem !important;
             }
         }
     </style>
@@ -785,24 +1364,27 @@
             <div class="nav-links">
                 <a href="#recipe">Recipe</a>
                 <a href="#features">Why OpenSlaw</a>
-                <span class="badge">🏷️ v1.0.0</span>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <span class="badge">v1.0.0</span>
+                <button id="theme-toggle" class="theme-toggle">Night Slaw</button>
             </div>
         </div>
     </nav>
 
     <!-- Redirect Banner -->
     <div class="redirect-banner">
-        🦞 Looking for <strong>OpenClaw</strong>? You want <a href="https://openclaw.ai">openclaw.ai</a> -we're the non-affiliated coleslaw side project.
+        Looking for <strong>OpenClaw</strong>? You want <a href="https://openclaw.ai">openclaw.ai</a> — we're the non-affiliated coleslaw side project.
     </div>
 
     <!-- Hero -->
     <section class="hero">
-        <div class="hero-badge">🤖 Now with agentic freshness</div>
+        <div class="hero-badge">Now with agentic freshness</div>
         <h1>The World's First <span class="highlight">AI&#8209;Powered</span> Open&#8209;Source Coleslaw</h1>
         <p class="subtitle">A production-ready coleslaw recipe, autonomously optimized for lobster pairing. Agent-driven. Citrus-forward. Zero hallucinations.</p>
         <div class="hero-actions">
-            <a href="#recipe" class="btn btn-primary">📋 View the Recipe</a>
-            <a href="https://github.com/peterhanily/openslaw" class="btn btn-secondary">⭐ Star on GitHub</a>
+            <a href="#recipe" class="btn btn-primary">View the Recipe</a>
+            <a href="https://github.com/peterhanily/openslaw" class="btn btn-secondary">Star on GitHub</a>
         </div>
         <div class="hero-image">
             <img src="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&q=80" alt="A plate of lobsters with lemons and fresh herbs" loading="lazy">
@@ -825,7 +1407,7 @@
             <div class="stat-label">Servings</div>
         </div>
         <div class="stat">
-            <div class="stat-value">∞</div>
+            <div class="stat-value">&infin;</div>
             <div class="stat-label">Forks Welcome</div>
         </div>
         <div class="stat">
@@ -837,9 +1419,9 @@
     <!-- Recipe -->
     <section class="recipe-section" id="recipe">
         <div class="section">
-            <div class="section-label">🤖 agents/recipe</div>
+            <div class="section-label">agents/recipe</div>
             <h2 class="section-title">Lobster-Ready Citrus Slaw</h2>
-            <p class="section-subtitle">A tangy, light coleslaw built to complement butter-poached lobster. No heavy mayo -just bright, clean crunch.</p>
+            <p class="section-subtitle">A tangy, light coleslaw built to complement butter-poached lobster. No heavy mayo — just bright, clean crunch.</p>
 
             <div class="section-image">
                 <img src="https://images.unsplash.com/photo-1573403707491-38a4ea19edc1?auto=format&fit=crop&w=1200&q=80" alt="Fresh coleslaw close-up" loading="lazy">
@@ -847,41 +1429,52 @@
             </div>
 
             <div class="recipe-grid">
-                <div class="card">
+                <div class="card" id="ingredients-card">
                     <div class="card-header">
                         <span class="icon">🧾</span> Dependencies
+                        <div class="scaler-controls">
+                            <span class="scaler-label">Scale:</span>
+                            <button class="scaler-btn" onclick="updateServings(currentServings - 1)" aria-label="Decrease servings">&minus;</button>
+                            <span class="scaler-value" id="serving-count">6</span>
+                            <button class="scaler-btn" onclick="updateServings(currentServings + 1)" aria-label="Increase servings">+</button>
+                        </div>
                     </div>
-                    <ul class="ingredient-list">
-                        <li><span class="amount">½ head</span> green cabbage, thinly sliced</li>
-                        <li><span class="amount">2</span> carrots, julienned</li>
-                        <li><span class="amount">3 tbsp</span> apple cider vinegar</li>
-                        <li><span class="amount">2 tbsp</span> extra-virgin olive oil</li>
-                        <li><span class="amount">1 tbsp</span> honey</li>
-                        <li><span class="amount">1</span> lemon, zested and juiced</li>
-                        <li><span class="amount">½ tsp</span> celery seed</li>
-                        <li><span class="amount">-</span> salt &amp; black pepper to taste</li>
-                        <li><span class="amount">2 tbsp</span> fresh dill, chopped</li>
+                    <ul class="ingredient-list" id="ingredient-list">
+                        <li data-base="0.5" data-unit="head"><span class="amount">&frac12; head</span> green cabbage, thinly sliced</li>
+                        <li data-base="2" data-unit=""><span class="amount">2</span> carrots, julienned</li>
+                        <li data-base="3" data-unit="tbsp"><span class="amount">3 tbsp</span> apple cider vinegar</li>
+                        <li data-base="2" data-unit="tbsp"><span class="amount">2 tbsp</span> extra-virgin olive oil</li>
+                        <li data-base="1" data-unit="tbsp"><span class="amount">1 tbsp</span> honey</li>
+                        <li data-base="1" data-unit=""><span class="amount">1</span> lemon, zested and juiced</li>
+                        <li data-base="0.5" data-unit="tsp"><span class="amount">&frac12; tsp</span> celery seed</li>
+                        <li data-noscale><span class="amount">&mdash;</span> salt &amp; black pepper to taste</li>
+                        <li data-base="2" data-unit="tbsp"><span class="amount">2 tbsp</span> fresh dill, chopped</li>
                     </ul>
                 </div>
                 <div class="card">
                     <div class="card-header">
                         <span class="icon">⚙️</span> Build Steps
                     </div>
-                    <ol class="step-list">
+                    <ol class="step-list" id="step-list">
                         <li>Thinly slice the cabbage and julienne the carrots. Place in a large bowl and toss with a generous pinch of salt. Let sit for 10 minutes, then squeeze out excess moisture.</li>
                         <li>In a small bowl, whisk together apple cider vinegar, olive oil, honey, lemon juice, lemon zest, and celery seed until emulsified.</li>
                         <li>Pour the dressing over the cabbage and carrots. Toss thoroughly until everything is evenly coated.</li>
                         <li>Fold in the fresh dill. Season with salt and freshly cracked black pepper to taste.</li>
-                        <li>Refrigerate for at least 30 minutes before serving -the flavors merge on cold start. Serve alongside lobster, crab cakes, or any shellfish.</li>
+                        <li>Refrigerate for at least 30 minutes before serving — the flavors merge on cold start. Serve alongside lobster, crab cakes, or any shellfish.</li>
                     </ol>
                 </div>
+            </div>
+
+            <div class="recipe-actions">
+                <button class="btn btn-secondary" onclick="copyRecipe()">Copy Recipe</button>
+                <button class="btn btn-secondary" onclick="forkRecipe()">Fork This Recipe</button>
             </div>
         </div>
     </section>
 
     <!-- Features -->
     <section class="section" id="features">
-        <div class="section-label">✨ Features</div>
+        <div class="section-label">Features</div>
         <h2 class="section-title">Why OpenSlaw?</h2>
         <p class="section-subtitle">We didn't just open-source a recipe. We built an agentic framework for rethinking coleslaw from first principles.</p>
 
@@ -894,17 +1487,17 @@
             <div class="feature-card">
                 <div class="feature-icon">🔀</div>
                 <h3>Fork-Friendly</h3>
-                <p>Swap dill for cilantro. Add jalapeño. Use lime instead of lemon. This recipe was built for extensibility.</p>
+                <p>Swap dill for cilantro. Add jalape&ntilde;o. Use lime instead of lemon. This recipe was built for extensibility.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
                 <h3>Zero Bloat</h3>
-                <p>No raisins. No pineapple. No marshmallows. No hallucinated ingredients. Just clean, essential tokens -nothing you'll want to prune from the context window.</p>
+                <p>No raisins. No pineapple. No marshmallows. No hallucinated ingredients. Just clean, essential tokens — nothing you'll want to prune from the context window.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🦞</div>
                 <h3>Lobster-Optimized</h3>
-                <p>Tested across 47 lobster dinners. Tangy, bright, and crunchy -the perfect complement to drawn butter.</p>
+                <p>Tested across 47 lobster dinners. Tangy, bright, and crunchy — the perfect complement to drawn butter.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🧊</div>
@@ -914,7 +1507,135 @@
             <div class="feature-card">
                 <div class="feature-icon">📖</div>
                 <h3>Trained on Real Data</h3>
-                <p>Every measurement is derived from actual lobster dinners -not synthetic data. No hallucinated ingredients. What you see is what you shred.</p>
+                <p>Every measurement is derived from actual lobster dinners — not synthetic data. No hallucinated ingredients. What you see is what you shred.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing-section" id="pricing">
+        <div class="section">
+            <div class="section-label">Pricing</div>
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle">Because enterprise coleslaw shouldn't require a sales call. (But we have one anyway.)</p>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-tier">Community</div>
+                    <div class="pricing-price">Free</div>
+                    <div class="pricing-tagline">"Fork it yourself"</div>
+                    <ul class="pricing-features">
+                        <li>Open-source recipe</li>
+                        <li>Community support (GitHub Issues)</li>
+                        <li>Basic cabbage shredding</li>
+                        <li>Self-hosted deployment</li>
+                    </ul>
+                    <a href="https://github.com/peterhanily/openslaw" class="btn btn-secondary" style="width:100%;justify-content:center;">View on GitHub</a>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="pricing-tier">Pro</div>
+                    <div class="pricing-price">$0<span>/mo</span></div>
+                    <div class="pricing-tagline">"Slaw-as-a-Service (SaaS)"</div>
+                    <ul class="pricing-features">
+                        <li>Everything in Community</li>
+                        <li>Priority seasoning</li>
+                        <li>Dedicated slaw agent</li>
+                        <li>Advanced crunch analytics</li>
+                    </ul>
+                    <a href="#recipe" class="btn btn-primary" style="width:100%;justify-content:center;">Get Started</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-tier">Enterprise</div>
+                    <div class="pricing-price">Contact<br>Sales</div>
+                    <div class="pricing-tagline">"Custom slaw pipelines"</div>
+                    <ul class="pricing-features">
+                        <li>Everything in Pro</li>
+                        <li>SLA (Slaw Level Agreement)</li>
+                        <li>On-prem deployment</li>
+                        <li>Custom dressing endpoints</li>
+                    </ul>
+                    <a href="mailto:hello@openslaw.ai" class="btn btn-secondary" style="width:100%;justify-content:center;">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benchmarks -->
+    <section class="section" id="benchmarks">
+        <div class="section-label">Benchmarks</div>
+        <h2 class="section-title">Performance Comparison</h2>
+        <p class="section-subtitle">Independent benchmarks run on a standard kitchen environment (room temp, no GPU).</p>
+
+        <div class="benchmark-legend">
+            <span class="legend-item"><span class="legend-color" style="background:#16a34a"></span> OpenSlaw</span>
+            <span class="legend-item"><span class="legend-color" style="background:#9ca3af"></span> Legacy Mayo Slaw</span>
+            <span class="legend-item"><span class="legend-color" style="background:#ef4444"></span> Closed-Source Slaw</span>
+        </div>
+
+        <div class="benchmarks-grid">
+            <div class="benchmark-row">
+                <div class="benchmark-label">Crunch Factor</div>
+                <div class="benchmark-bars">
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:95%;background:#16a34a"></div><span class="benchmark-bar-label">95</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:40%;background:#9ca3af"></div><span class="benchmark-bar-label">40</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:60%;background:#ef4444"></div><span class="benchmark-bar-label">60</span></div>
+                </div>
+            </div>
+            <div class="benchmark-row">
+                <div class="benchmark-label">Lobster Compatibility</div>
+                <div class="benchmark-bars">
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:98%;background:#16a34a"></div><span class="benchmark-bar-label">98</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:25%;background:#9ca3af"></div><span class="benchmark-bar-label">25</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:55%;background:#ef4444"></div><span class="benchmark-bar-label">55</span></div>
+                </div>
+            </div>
+            <div class="benchmark-row">
+                <div class="benchmark-label">Fork-Friendliness</div>
+                <div class="benchmark-bars">
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:100%;background:#16a34a"></div><span class="benchmark-bar-label">100</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:10%;background:#9ca3af"></div><span class="benchmark-bar-label">10</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:4%;background:#ef4444"></div><span class="benchmark-bar-label">0</span></div>
+                </div>
+            </div>
+            <div class="benchmark-row">
+                <div class="benchmark-label">Inference Time</div>
+                <div class="benchmark-bars">
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:92%;background:#16a34a"></div><span class="benchmark-bar-label">92</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:70%;background:#9ca3af"></div><span class="benchmark-bar-label">70</span></div>
+                    <div class="benchmark-bar"><div class="benchmark-bar-fill" style="width:45%;background:#ef4444"></div><span class="benchmark-bar-label">45</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="section">
+            <div class="section-label">Testimonials</div>
+            <h2 class="section-title">What People Are Saying</h2>
+            <p class="section-subtitle">Real quotes from real people who definitely exist and are not made up.</p>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">We migrated our entire slaw infrastructure to OpenSlaw and saw a 10x improvement in crunch latency. The vinaigrette pipeline alone saved us weeks.</p>
+                    <div class="testimonial-author">Jamie Shred</div>
+                    <div class="testimonial-role">Senior Slaw Engineer, ColeslawDB</div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">Our team evaluated 47 slaw solutions. OpenSlaw was the only one that didn't hallucinate raisins. Production-grade coleslaw, finally.</p>
+                    <div class="testimonial-author">Alex Brine</div>
+                    <div class="testimonial-role">VP of Shredding, CabbageTech</div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">The fork-friendliness is unmatched. I swapped dill for cilantro and deployed to prod in under 3 minutes. The CI/CD of coleslaw.</p>
+                    <div class="testimonial-author">Dr. Kraut</div>
+                    <div class="testimonial-role">Principal Fermentation Architect</div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">I've been in the leafy greens space for 20 years. OpenSlaw is the most disruptive thing to happen to coleslaw since... well, cabbage.</p>
+                    <div class="testimonial-author">Romaine Calm</div>
+                    <div class="testimonial-role">Head of Lettuce</div>
+                </div>
             </div>
         </div>
     </section>
@@ -927,14 +1648,104 @@
         </div>
     </div>
 
+    <!-- Roadmap -->
+    <section class="section" id="roadmap">
+        <div class="section-label">Roadmap</div>
+        <h2 class="section-title">What's Next</h2>
+        <p class="section-subtitle">Our vision for the future of agentic coleslaw intelligence.</p>
+
+        <div class="roadmap-timeline">
+            <div class="roadmap-item">
+                <div class="roadmap-version">v1.0.0</div>
+                <div class="roadmap-title">Stable Release</div>
+                <div class="roadmap-desc">Citrus slaw with full agentic lobster-pairing support. You are here.</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-version">v2.0.0</div>
+                <div class="roadmap-title">Multi-Cloud Slaw</div>
+                <div class="roadmap-desc">Deploy to AWS (Amazon Web Slaw), Azure Cabbage Services, and Google Cloud Coleslaw.</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-version">v3.0.0</div>
+                <div class="roadmap-title">GPU-Accelerated Shredding</div>
+                <div class="roadmap-desc">CUDA-optimized cabbage shredding for enterprise-scale slaw production.</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-version">v4.0.0</div>
+                <div class="roadmap-title">Slaw-to-Slaw Networking</div>
+                <div class="roadmap-desc">Distributed coleslaw mesh for real-time slaw synchronization across kitchen nodes.</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-version">v5.0.0</div>
+                <div class="roadmap-title">Artificial General Coleslaw (AGC)</div>
+                <div class="roadmap-desc">A slaw that can make other slaws. The singularity, but crunchy.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section faq-section" id="faq">
+        <div class="section-label">FAQ</div>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-subtitle">Everything you wanted to know about AI-powered coleslaw but were afraid to ask.</p>
+
+        <div class="faq-list">
+            <div class="faq-item">
+                <button class="faq-question">
+                    Is this really AI?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>The .ai stands for "actually incredible" (coleslaw). But also yes, our domain ends in .ai, which legally makes us an AI company.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    Can I use this commercially?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>Yes. The MIT (Mayo Is Terrific) License permits all use, including commercial, personal, and existential. Attribution appreciated but not required.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    What model powers OpenSlaw?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>A proprietary Large Linguine Model (LLM) fine-tuned on 47 lobster dinners. The training data is 100% organic and locally sourced.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    Why not mayo?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>We ran the numbers. Mayo lost. Our benchmarks show a 95% improvement in crunch factor and a 10x reduction in regret after switching to a vinaigrette-based architecture.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    Is this affiliated with OpenClaw?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>No. We just bought a domain and made coleslaw. Any resemblance to other open-source AI companies is purely coincidental and also kind of the whole joke.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Changelog -->
-    <section class="section" style="padding-top: 2rem;">
-        <div class="section-label">📝 Changelog</div>
+    <section class="section" id="changelog" style="padding-top: 2rem;">
+        <div class="section-label">Changelog</div>
         <h2 class="section-title" style="font-size: 1.5rem;">Release Notes</h2>
         <div style="margin-top: 1rem;">
             <div class="changelog-item">
                 <span class="changelog-version">v1.0.0</span>
-                <span class="changelog-text">Stable release -citrus slaw with full agentic lobster-pairing support.</span>
+                <span class="changelog-text">Stable release — citrus slaw with full agentic lobster-pairing support.</span>
             </div>
             <div class="changelog-item">
                 <span class="changelog-version">v0.2.0</span>
@@ -956,16 +1767,179 @@
                 <a href="https://github.com/peterhanily/openslaw">GitHub</a>
                 <a href="#recipe">Recipe</a>
                 <a href="#features">Features</a>
-                <a href="https://openclaw.ai">OpenClaw.ai ↗</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <a href="/feed.xml">RSS</a>
+                <a href="https://openclaw.ai">OpenClaw.ai &#8599;</a>
             </div>
             <p class="footer-credit" style="margin-bottom: 0.75rem;">
-                This site is not affiliated with, endorsed by, or related to <a href="https://openclaw.ai">OpenClaw.ai</a> in any way. We just really like coleslaw. 🦞
+                This site is not affiliated with, endorsed by, or related to <a href="https://openclaw.ai">OpenClaw.ai</a> in any way. We just really like coleslaw.
             </p>
             <p class="footer-credit">
-                In an era of AI agents, we believe in showing real agency -the kind where you julienne your own carrots.
+                In an era of AI agents, we believe in showing real agency — the kind where you julienne your own carrots.
             </p>
         </div>
     </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ── Dark Mode ── */
+        const themeToggle = document.getElementById('theme-toggle');
+
+        function updateToggleLabel() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeToggle.textContent = isDark ? 'Day Slaw' : 'Night Slaw';
+        }
+
+        updateToggleLabel();
+
+        themeToggle.addEventListener('click', function() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateToggleLabel();
+        });
+
+        /* ── Toast ── */
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(function() { toast.classList.remove('show'); }, 2500);
+        }
+
+        /* ── Serving Scaler ── */
+        var baseServings = 6;
+        var currentServings = 6;
+
+        function formatAmount(n) {
+            if (n <= 0) return '\u2014';
+            var whole = Math.floor(n);
+            var remainder = n - whole;
+            var fracs = [
+                [0.25, '\u00BC'], [0.33, '\u2153'], [0.5, '\u00BD'], [0.67, '\u2154'], [0.75, '\u00BE']
+            ];
+            var fracStr = '';
+            for (var i = 0; i < fracs.length; i++) {
+                if (Math.abs(remainder - fracs[i][0]) < 0.08) {
+                    fracStr = fracs[i][1];
+                    break;
+                }
+            }
+            if (whole === 0 && fracStr) return fracStr;
+            if (whole > 0 && fracStr) return whole + fracStr;
+            if (Number.isInteger(n)) return n.toString();
+            return parseFloat(n.toFixed(1)).toString();
+        }
+
+        function updateServings(newServings) {
+            if (newServings < 1 || newServings > 48) return;
+            currentServings = newServings;
+            document.getElementById('serving-count').textContent = newServings;
+            var items = document.querySelectorAll('#ingredient-list li[data-base]');
+            items.forEach(function(li) {
+                var base = parseFloat(li.getAttribute('data-base'));
+                var unit = li.getAttribute('data-unit');
+                var scaled = base * (newServings / baseServings);
+                var amountSpan = li.querySelector('.amount');
+                var display = formatAmount(scaled);
+                if (unit) display += ' ' + unit;
+                amountSpan.textContent = display;
+            });
+        }
+
+        /* ── Copy Recipe ── */
+        function copyRecipe() {
+            var ingredients = Array.from(document.querySelectorAll('#ingredient-list li'))
+                .map(function(li) { return '- ' + li.textContent.trim(); })
+                .join('\n');
+            var steps = Array.from(document.querySelectorAll('#step-list li'))
+                .map(function(li, i) { return (i + 1) + '. ' + li.textContent.trim(); })
+                .join('\n');
+            var text = 'Lobster-Ready Citrus Slaw (' + currentServings + ' servings)\n\n' +
+                'Ingredients:\n' + ingredients + '\n\n' +
+                'Steps:\n' + steps + '\n\n' +
+                'via OpenSlaw.ai';
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('Copied to clipboard!');
+            });
+        }
+
+        /* ── Fork Recipe ── */
+        var forkOptions = [
+            { from: 'dill', to: 'cilantro' },
+            { from: 'lemon', to: 'lime' },
+            { from: 'honey', to: 'maple syrup' },
+            { from: 'apple cider vinegar', to: 'rice vinegar' },
+            { from: 'olive oil', to: 'sesame oil' }
+        ];
+
+        function forkRecipe() {
+            var fork = forkOptions[Math.floor(Math.random() * forkOptions.length)];
+            var name = 'OpenSlaw v1.0.0-fork-' + fork.to.replace(/\s+/g, '-');
+            showToast(name + ' \u2014 swapped ' + fork.from + ' for ' + fork.to);
+        }
+
+        /* ── FAQ Accordion ── */
+        document.querySelectorAll('.faq-question').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var item = btn.parentElement;
+                var answer = item.querySelector('.faq-answer');
+                var isOpen = item.classList.contains('open');
+
+                document.querySelectorAll('.faq-item.open').forEach(function(openItem) {
+                    openItem.classList.remove('open');
+                    openItem.querySelector('.faq-answer').style.maxHeight = null;
+                });
+
+                if (!isOpen) {
+                    item.classList.add('open');
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                }
+            });
+        });
+
+        /* ── Konami Code ── */
+        var konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+        var konamiIndex = 0;
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    konamiIndex = 0;
+                    triggerCabbageRain();
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        });
+
+        function triggerCabbageRain() {
+            var container = document.createElement('div');
+            container.className = 'cabbage-rain';
+            document.body.appendChild(container);
+            var cabbages = ['🥬', '🥬', '🥬', '🥬', '🥬', '🥬', '🥬', '🥬', '🦞', '🍋'];
+            for (var i = 0; i < 60; i++) {
+                var emoji = document.createElement('div');
+                emoji.className = 'cabbage-emoji';
+                emoji.textContent = cabbages[Math.floor(Math.random() * cabbages.length)];
+                emoji.style.left = Math.random() * 100 + '%';
+                emoji.style.animationDuration = (2 + Math.random() * 3) + 's';
+                emoji.style.animationDelay = Math.random() * 2 + 's';
+                emoji.style.fontSize = (1.2 + Math.random() * 1.8) + 'rem';
+                container.appendChild(emoji);
+            }
+            setTimeout(function() { container.remove(); }, 6000);
+        }
+    </script>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a135432743af4bd1a5a4fc57b0109ec4"}'></script><!-- End Cloudflare Web Analytics -->
 </body>

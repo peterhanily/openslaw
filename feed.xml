@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenSlaw.ai Release Notes</title>
+    <description>Changelog for the world's first AI-powered open-source coleslaw recipe. Autonomously optimized for lobster pairing.</description>
+    <link>https://openslaw.ai</link>
+    <atom:link href="https://openslaw.ai/feed.xml" rel="self" type="application/rss+xml"/>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 21 Jun 2025 00:00:00 GMT</lastBuildDate>
+    <item>
+      <title>v1.0.0 — Stable Release</title>
+      <description>Stable release — citrus slaw with full agentic lobster-pairing support.</description>
+      <link>https://openslaw.ai/#changelog</link>
+      <guid isPermaLink="false">openslaw-v1.0.0</guid>
+      <pubDate>Sat, 21 Jun 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>v0.2.0 — Mayo Removal (Breaking Change)</title>
+      <description>Swapped mayo for olive oil + ACV. Breaking change: texture now enjoyable. Retrained all slaw agents.</description>
+      <link>https://openslaw.ai/#changelog</link>
+      <guid isPermaLink="false">openslaw-v0.2.0</guid>
+      <pubDate>Sat, 14 Jun 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>v0.1.0 — Proof of Concept</title>
+      <description>Proof of concept. Mostly cabbage. The AI recommended raisins. We fired the AI.</description>
+      <link>https://openslaw.ai/#changelog</link>
+      <guid isPermaLink="false">openslaw-v0.1.0</guid>
+      <pubDate>Sat, 07 Jun 2025 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
