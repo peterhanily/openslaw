@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSlaw.ai -Agentic Slaw Intelligence</title>
+    <meta name="description" content="The world's first AI-powered open-source coleslaw recipe, autonomously optimized for lobster pairing. Fork it. Ship it. Eat it.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-50: #f0fdf4;
+            --green-100: #dcfce7;
+            --green-200: #bbf7d0;
+            --green-400: #4ade80;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --green-700: #15803d;
+            --green-800: #166534;
+            --green-900: #14532d;
+            --red-400: #f87171;
+            --red-500: #ef4444;
+            --red-600: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--gray-800);
+            background: #ffffff;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .nav-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text span {
+            color: var(--green-600);
+        }
+
+        .nav-tagline {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--green-600);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--green-200);
+            background: var(--green-50);
+            color: var(--green-700);
+        }
+
+        /* ── Redirect Banner ── */
+        .redirect-banner {
+            margin-top: 64px;
+            background: linear-gradient(90deg, var(--red-500), var(--red-600));
+            color: white;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .redirect-banner a {
+            color: white;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .redirect-banner a:hover {
+            opacity: 0.9;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 6rem 1.5rem 4rem;
+            text-align: center;
+            background: linear-gradient(180deg, var(--green-50) 0%, #ffffff 100%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--green-100);
+            color: var(--green-700);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--green-200);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: var(--gray-900);
+            max-width: 800px;
+            margin: 0 auto 1.25rem;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--green-500), var(--green-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+            color: var(--gray-500);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--green-600);
+            color: white;
+            box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--green-700);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+        }
+
+        /* ── Stats ── */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            padding: 2rem 1.5rem 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--green-600);
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.15rem;
+        }
+
+        /* ── Section shared ── */
+        .section {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-600);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-500);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── Recipe Cards ── */
+        .recipe-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid var(--gray-200);
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--gray-800);
+        }
+
+        .card-header .icon {
+            font-size: 1.25rem;
+        }
+
+        .ingredient-list {
+            list-style: none;
+        }
+
+        .ingredient-list li {
+            padding: 0.55rem 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .ingredient-list li:last-child {
+            border-bottom: none;
+        }
+
+        .ingredient-list .amount {
+            font-weight: 600;
+            color: var(--green-700);
+            white-space: nowrap;
+            min-width: 4.5rem;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: steps;
+        }
+
+        .step-list li {
+            counter-increment: steps;
+            padding: 0.75rem 0;
+            padding-left: 2.5rem;
+            position: relative;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            line-height: 1.6;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .step-list li:last-child {
+            border-bottom: none;
+        }
+
+        .step-list li::before {
+            content: counter(steps);
+            position: absolute;
+            left: 0;
+            top: 0.75rem;
+            width: 1.75rem;
+            height: 1.75rem;
+            background: var(--green-100);
+            color: var(--green-700);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* ── Features Grid ── */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--green-300);
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--green-100);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.35rem;
+        }
+
+        .feature-card p {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        /* ── Changelog ── */
+        .changelog-item {
+            display: flex;
+            gap: 1rem;
+            align-items: baseline;
+            padding: 0.5rem 0;
+        }
+
+        .changelog-version {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-600);
+            background: var(--green-50);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .changelog-text {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            padding: 3rem 1.5rem 2rem;
+        }
+
+        .footer-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-logo span {
+            color: var(--green-600);
+        }
+
+        .footer-license {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--green-600);
+        }
+
+        .footer-credit {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+        }
+
+        .footer-credit a {
+            color: var(--red-500);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-credit a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Hero Image ── */
+        .hero-image {
+            max-width: 800px;
+            margin: 3rem auto 0;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 360px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hero-image .photo-credit {
+            background: var(--gray-900);
+            color: var(--gray-400);
+            font-size: 0.7rem;
+            padding: 0.4rem 1rem;
+            text-align: right;
+        }
+
+        .hero-image .photo-credit a {
+            color: var(--gray-300);
+            text-decoration: none;
+        }
+
+        .hero-image .photo-credit a:hover {
+            color: white;
+        }
+
+        /* ── Section Image Banner ── */
+        .section-image {
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .section-image img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .section-image .photo-credit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--gray-300);
+            font-size: 0.65rem;
+            padding: 0.25rem 0.6rem;
+            border-top-left-radius: 0.5rem;
+        }
+
+        .section-image .photo-credit a {
+            color: var(--gray-200);
+            text-decoration: none;
+        }
+
+        /* ── Accent Image Band ── */
+        .image-band {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .image-band-inner {
+            border-radius: 1rem;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .image-band img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-band .photo-credit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--gray-300);
+            font-size: 0.65rem;
+            padding: 0.25rem 0.6rem;
+            border-top-left-radius: 0.5rem;
+        }
+
+        .image-band .photo-credit a {
+            color: var(--gray-200);
+            text-decoration: none;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .nav-tagline {
+                display: none;
+            }
+
+            .hero {
+                padding: 4rem 1.5rem 3rem;
+            }
+
+            .hero-image img {
+                height: 240px;
+            }
+
+            .section-image img {
+                height: 200px;
+            }
+
+            .image-band img {
+                height: 200px;
+            }
+
+            .stats {
+                gap: 1.5rem;
+            }
+
+            .recipe-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .section {
+                padding: 3rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-inner {
+                height: 56px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                max-width: 280px;
+            }
+
+            .stats {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav>
+        <div class="nav-inner">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <a href="#" class="logo">
+                    <span class="logo-icon">🥬</span>
+                    <span class="logo-text">Open<span>Slaw</span>.ai</span>
+                </a>
+                <span class="nav-tagline">Agentic Slaw Intelligence</span>
+            </div>
+            <div class="nav-links">
+                <a href="#recipe">Recipe</a>
+                <a href="#features">Why OpenSlaw</a>
+                <span class="badge">🏷️ v1.0.0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Redirect Banner -->
+    <div class="redirect-banner">
+        🦞 Looking for <strong>OpenClaw</strong>? You want <a href="https://openclaw.ai">openclaw.ai</a> -we're the non-affiliated coleslaw side project.
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">🤖 Now with agentic freshness</div>
+        <h1>The World's First <span class="highlight">AI&#8209;Powered</span> Open&#8209;Source Coleslaw</h1>
+        <p class="subtitle">A production-ready coleslaw recipe, autonomously optimized for lobster pairing. Agent-driven. Citrus-forward. Zero hallucinations.</p>
+        <div class="hero-actions">
+            <a href="#recipe" class="btn btn-primary">📋 View the Recipe</a>
+            <a href="https://github.com/peterhanily/openslaw" class="btn btn-secondary">⭐ Star on GitHub</a>
+        </div>
+        <div class="hero-image">
+            <img src="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&q=80" alt="A plate of lobsters with lemons and fresh herbs" loading="lazy">
+            <div class="photo-credit">Photo by <a href="https://unsplash.com/@fotoinshadows">Monika Borys</a> on <a href="https://unsplash.com">Unsplash</a></div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Ingredients</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">15 min</div>
+            <div class="stat-label">Prep Time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Servings</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">∞</div>
+            <div class="stat-label">Forks Welcome</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Hallucinations</div>
+        </div>
+    </div>
+
+    <!-- Recipe -->
+    <section class="recipe-section" id="recipe">
+        <div class="section">
+            <div class="section-label">🤖 agents/recipe</div>
+            <h2 class="section-title">Lobster-Ready Citrus Slaw</h2>
+            <p class="section-subtitle">A tangy, light coleslaw built to complement butter-poached lobster. No heavy mayo -just bright, clean crunch.</p>
+
+            <div class="section-image">
+                <img src="https://images.unsplash.com/photo-1573403707491-38a4ea19edc1?auto=format&fit=crop&w=1200&q=80" alt="Fresh coleslaw close-up" loading="lazy">
+                <span class="photo-credit">Photo by <a href="https://unsplash.com/@jacquesbopp">Jacques Bopp</a> on Unsplash</span>
+            </div>
+
+            <div class="recipe-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="icon">🧾</span> Dependencies
+                    </div>
+                    <ul class="ingredient-list">
+                        <li><span class="amount">½ head</span> green cabbage, thinly sliced</li>
+                        <li><span class="amount">2</span> carrots, julienned</li>
+                        <li><span class="amount">3 tbsp</span> apple cider vinegar</li>
+                        <li><span class="amount">2 tbsp</span> extra-virgin olive oil</li>
+                        <li><span class="amount">1 tbsp</span> honey</li>
+                        <li><span class="amount">1</span> lemon, zested and juiced</li>
+                        <li><span class="amount">½ tsp</span> celery seed</li>
+                        <li><span class="amount">-</span> salt &amp; black pepper to taste</li>
+                        <li><span class="amount">2 tbsp</span> fresh dill, chopped</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="icon">⚙️</span> Build Steps
+                    </div>
+                    <ol class="step-list">
+                        <li>Thinly slice the cabbage and julienne the carrots. Place in a large bowl and toss with a generous pinch of salt. Let sit for 10 minutes, then squeeze out excess moisture.</li>
+                        <li>In a small bowl, whisk together apple cider vinegar, olive oil, honey, lemon juice, lemon zest, and celery seed until emulsified.</li>
+                        <li>Pour the dressing over the cabbage and carrots. Toss thoroughly until everything is evenly coated.</li>
+                        <li>Fold in the fresh dill. Season with salt and freshly cracked black pepper to taste.</li>
+                        <li>Refrigerate for at least 30 minutes before serving -the flavors merge on cold start. Serve alongside lobster, crab cakes, or any shellfish.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+        <div class="section-label">✨ Features</div>
+        <h2 class="section-title">Why OpenSlaw?</h2>
+        <p class="section-subtitle">We didn't just open-source a recipe. We built an agentic framework for rethinking coleslaw from first principles.</p>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🍋</div>
+                <h3>Citrus-Forward Architecture</h3>
+                <p>Lemon zest and apple cider vinegar replace heavy mayo. Lighter, brighter, and actually enjoyable next to lobster.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔀</div>
+                <h3>Fork-Friendly</h3>
+                <p>Swap dill for cilantro. Add jalapeño. Use lime instead of lemon. This recipe was built for extensibility.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Zero Bloat</h3>
+                <p>No raisins. No pineapple. No marshmallows. No hallucinated ingredients. Just clean, essential tokens -nothing you'll want to prune from the context window.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🦞</div>
+                <h3>Lobster-Optimized</h3>
+                <p>Tested across 47 lobster dinners. Tangy, bright, and crunchy -the perfect complement to drawn butter.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧊</div>
+                <h3>Cold-Start Ready</h3>
+                <p>30 minutes in the fridge is all it takes. Unlike most AI models, this one actually performs better after a cold start. Caches well overnight.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📖</div>
+                <h3>Trained on Real Data</h3>
+                <p>Every measurement is derived from actual lobster dinners -not synthetic data. No hallucinated ingredients. What you see is what you shred.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lobster Image -->
+    <div class="image-band">
+        <div class="image-band-inner">
+            <img src="https://images.unsplash.com/photo-1751298467221-bb1b0d298101?auto=format&fit=crop&w=1200&q=80" alt="A delicious lobster roll on a plate" loading="lazy">
+            <span class="photo-credit">Photo by <a href="https://unsplash.com/@crunch_london">Crunch</a> on Unsplash</span>
+        </div>
+    </div>
+
+    <!-- Changelog -->
+    <section class="section" style="padding-top: 2rem;">
+        <div class="section-label">📝 Changelog</div>
+        <h2 class="section-title" style="font-size: 1.5rem;">Release Notes</h2>
+        <div style="margin-top: 1rem;">
+            <div class="changelog-item">
+                <span class="changelog-version">v1.0.0</span>
+                <span class="changelog-text">Stable release -citrus slaw with full agentic lobster-pairing support.</span>
+            </div>
+            <div class="changelog-item">
+                <span class="changelog-version">v0.2.0</span>
+                <span class="changelog-text">Swapped mayo for olive oil + ACV. Breaking change: texture now enjoyable. Retrained all slaw agents.</span>
+            </div>
+            <div class="changelog-item">
+                <span class="changelog-version">v0.1.0</span>
+                <span class="changelog-text">Proof of concept. Mostly cabbage. The AI recommended raisins. We fired the AI.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-logo">🥬 Open<span>Slaw</span>.ai</div>
+            <p class="footer-license">Licensed under the <strong>MIT</strong> (Mayo Is Terrific) License</p>
+            <div class="footer-links">
+                <a href="https://github.com/peterhanily/openslaw">GitHub</a>
+                <a href="#recipe">Recipe</a>
+                <a href="#features">Features</a>
+                <a href="https://openclaw.ai">OpenClaw.ai ↗</a>
+            </div>
+            <p class="footer-credit" style="margin-bottom: 0.75rem;">
+                This site is not affiliated with, endorsed by, or related to <a href="https://openclaw.ai">OpenClaw.ai</a> in any way. We just really like coleslaw. 🦞
+            </p>
+            <p class="footer-credit">
+                In an era of AI agents, we believe in showing real agency -the kind where you julienne your own carrots.
+            </p>
+        </div>
+    </footer>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a135432743af4bd1a5a4fc57b0109ec4"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
