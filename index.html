@@ -1214,6 +1214,171 @@
             animation: cabbage-fall linear forwards;
         }
 
+        /* ── Quickstart Terminal ── */
+        .quickstart {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+
+        .terminal {
+            background: #1e293b;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .terminal-dot {
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #eab308; }
+        .terminal-dot.green { background: #22c55e; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        }
+
+        .terminal-body {
+            padding: 1rem 1.25rem;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+        }
+
+        .terminal-body .prompt {
+            color: #4ade80;
+            user-select: none;
+        }
+
+        .terminal-body .comment {
+            color: #64748b;
+        }
+
+        .terminal-body .output {
+            color: #94a3b8;
+        }
+
+        /* ── Compliance Badges ── */
+        .compliance-strip {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            flex-wrap: wrap;
+            max-width: 1120px;
+            margin: 2rem auto 0;
+        }
+
+        .compliance-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            padding: 0.35rem 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.375rem;
+            background: var(--card-bg);
+            white-space: nowrap;
+        }
+
+        .compliance-badge .badge-icon {
+            font-size: 0.85rem;
+        }
+
+        /* ── Hiring ── */
+        .hiring-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .hiring-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .hiring-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .hiring-card:hover {
+            border-color: var(--green-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.08);
+        }
+
+        .hiring-role {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .hiring-dept {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-600);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hiring-desc {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        .hiring-comp {
+            margin-top: 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        /* ── Built With ── */
+        .built-with {
+            margin-top: 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        .built-with code {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            background: var(--gray-100);
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.2rem;
+            font-size: 0.72rem;
+            color: var(--gray-500);
+        }
+
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .nav-tagline {
@@ -1270,6 +1435,14 @@
                 grid-template-columns: 1fr;
             }
 
+            .hiring-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .compliance-strip {
+                gap: 0.75rem;
+            }
+
             .section {
                 padding: 3rem 1.5rem;
             }
@@ -1318,6 +1491,7 @@
             .theme-toggle, .scaler-controls, .recipe-actions,
             .pricing-section, .benchmarks-section,
             .testimonials-section, .roadmap-section,
+            .hiring-section, .compliance-strip, .quickstart,
             .faq-section, .toast, .hero-badge, footer {
                 display: none !important;
             }
@@ -1413,6 +1587,26 @@
         <div class="stat">
             <div class="stat-value">0</div>
             <div class="stat-label">Hallucinations</div>
+        </div>
+    </div>
+
+    <!-- Quickstart -->
+    <div class="quickstart">
+        <div class="terminal">
+            <div class="terminal-header">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">Terminal — openslaw</span>
+            </div>
+            <div class="terminal-body">
+                <div><span class="prompt">$ </span>npx create-openslaw@latest my-slaw</div>
+                <div class="output">Shredding cabbage... done</div>
+                <div class="output">Julienning carrots... done</div>
+                <div class="output">Emulsifying dressing... done</div>
+                <div class="output">Deploying to fridge... done</div>
+                <div><span class="comment"># Ready to serve in 30 minutes</span></div>
+            </div>
         </div>
     </div>
 
@@ -1640,6 +1834,15 @@
         </div>
     </section>
 
+    <!-- Compliance -->
+    <div class="compliance-strip">
+        <span class="compliance-badge"><span class="badge-icon">🔒</span> SOC 2 Compliant</span>
+        <span class="compliance-badge"><span class="badge-icon">🛡️</span> GDPR (Garnish Data Privacy Regulation)</span>
+        <span class="compliance-badge"><span class="badge-icon">📋</span> ISO 9001 Coleslaw Certified</span>
+        <span class="compliance-badge"><span class="badge-icon">🥗</span> HIPAA (Herbs In Proper Arrangement Act)</span>
+        <span class="compliance-badge"><span class="badge-icon">✅</span> Mayo-Free Verified</span>
+    </div>
+
     <!-- Lobster Image -->
     <div class="image-band">
         <div class="image-band-inner">
@@ -1679,6 +1882,42 @@
                 <div class="roadmap-version">v5.0.0</div>
                 <div class="roadmap-title">Artificial General Coleslaw (AGC)</div>
                 <div class="roadmap-desc">A slaw that can make other slaws. The singularity, but crunchy.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hiring -->
+    <section class="hiring-section" id="careers">
+        <div class="section">
+            <div class="section-label">Careers</div>
+            <h2 class="section-title">We're Hiring</h2>
+            <p class="section-subtitle">Join the team building the future of open-source coleslaw. Remote-friendly. Lunch provided (coleslaw).</p>
+
+            <div class="hiring-grid">
+                <div class="hiring-card">
+                    <div class="hiring-role">Senior Shredding Engineer</div>
+                    <div class="hiring-dept">Engineering</div>
+                    <p class="hiring-desc">5+ years experience with knives. Must be comfortable working with raw vegetables at scale. Kubernetes experience a plus (for the container orchestration jokes).</p>
+                    <div class="hiring-comp">Competitive slaw-ary + equity</div>
+                </div>
+                <div class="hiring-card">
+                    <div class="hiring-role">VP of Crunch Metrics</div>
+                    <div class="hiring-dept">Analytics</div>
+                    <p class="hiring-desc">Own the crunch-factor dashboard end-to-end. You'll define KPIs (Key Pickle Indicators) and report directly to the Head of Lettuce.</p>
+                    <div class="hiring-comp">Base + performance bonus (measured in croutons)</div>
+                </div>
+                <div class="hiring-card">
+                    <div class="hiring-role">Developer Advocate</div>
+                    <div class="hiring-dept">Community</div>
+                    <p class="hiring-desc">Evangelize the OpenSlaw ecosystem at conferences, meetups, and potlucks. Must be willing to bring a side dish to every event.</p>
+                    <div class="hiring-comp">Slaw-ary + travel + unlimited PTO (Produce Time Off)</div>
+                </div>
+                <div class="hiring-card">
+                    <div class="hiring-role">Principal Fermentation Architect</div>
+                    <div class="hiring-dept">R&amp;D</div>
+                    <p class="hiring-desc">Lead our kimchi-slaw convergence initiative. PhD in Brassica Sciences preferred. Must not be afraid of fermentation at enterprise scale.</p>
+                    <div class="hiring-comp">Above-market comp + signing cabbage</div>
+                </div>
             </div>
         </div>
     </section>
@@ -1728,6 +1967,24 @@
             </div>
             <div class="faq-item">
                 <button class="faq-question">
+                    Can I use this offline?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>Yes. Once deployed to your kitchen, OpenSlaw runs fully offline. No Wi-Fi, no cloud, no dill batteries required. It's a coleslaw recipe.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    How do I contribute?
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>Fork the repo (on GitHub, not in your kitchen). Open a PR with your proposed changes. All contributions are reviewed by our Senior Slaw Engineers. Please include taste-test results.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
                     Is this affiliated with OpenClaw?
                     <span class="faq-icon">+</span>
                 </button>
@@ -1772,6 +2029,13 @@
                 <a href="/feed.xml">RSS</a>
                 <a href="https://openclaw.ai">OpenClaw.ai &#8599;</a>
             </div>
+            <div class="built-with">
+                Built with <code>HTML</code> <code>CSS</code> <code>Vanilla JS</code> &middot;
+                Hosted on <code>GitHub Pages</code> &middot;
+                Served via <code>Cloudflare</code> &middot;
+                Tested on <code>47 lobster dinners</code> &middot;
+                Optimized by <code>one very motivated agent</code>
+            </div>
             <p class="footer-credit" style="margin-bottom: 0.75rem;">
                 This site is not affiliated with, endorsed by, or related to <a href="https://openclaw.ai">OpenClaw.ai</a> in any way. We just really like coleslaw.
             </p>
@@ -1805,6 +2069,7 @@
                 localStorage.setItem('theme', 'dark');
             }
             updateToggleLabel();
+            showToast(document.documentElement.getAttribute('data-theme') === 'dark' ? 'Night Slaw activated' : 'Day Slaw activated');
         });
 
         /* ── Toast ── */
@@ -1939,6 +2204,22 @@
             }
             setTimeout(function() { container.remove(); }, 6000);
         }
+
+        /* ── Logo Easter Egg ── */
+        var logoClickCount = 0;
+        var logoClickTimer = null;
+        document.querySelector('.logo').addEventListener('click', function(e) {
+            logoClickCount++;
+            clearTimeout(logoClickTimer);
+            if (logoClickCount >= 5) {
+                logoClickCount = 0;
+                showToast('Still just coleslaw.');
+            } else if (logoClickCount >= 3) {
+                showToast('Keep clicking...');
+            } else {
+                logoClickTimer = setTimeout(function() { logoClickCount = 0; }, 2000);
+            }
+        });
     </script>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a135432743af4bd1a5a4fc57b0109ec4"}'></script><!-- End Cloudflare Web Analytics -->
