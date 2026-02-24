@@ -1361,6 +1361,55 @@
             font-style: italic;
         }
 
+        /* ── Game Callout ── */
+        .game-callout {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+        }
+
+        .game-callout-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-800);
+            transition: all 0.2s;
+        }
+
+        .game-callout-card:hover {
+            border-color: var(--green-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.1);
+        }
+
+        .game-callout-icon {
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .game-callout-text {
+            text-align: left;
+        }
+
+        .game-callout-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.15rem;
+        }
+
+        .game-callout-desc {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            line-height: 1.4;
+        }
+
         /* ── Built With ── */
         .built-with {
             margin-top: 1rem;
@@ -1491,7 +1540,7 @@
             .theme-toggle, .scaler-controls, .recipe-actions,
             .pricing-section, .benchmarks-section,
             .testimonials-section, .roadmap-section,
-            .hiring-section, .compliance-strip, .quickstart,
+            .hiring-section, .compliance-strip, .quickstart, .game-callout,
             .faq-section, .toast, .hero-badge, footer {
                 display: none !important;
             }
@@ -1921,6 +1970,18 @@
             </div>
         </div>
     </section>
+
+    <!-- Game Callout -->
+    <div class="game-callout">
+        <a href="/flappy-lobster.html" class="game-callout-card">
+            <span class="game-callout-icon">🦞</span>
+            <div class="game-callout-text">
+                <div class="game-callout-title">Flappy Lobster: Slaw Avoidance Simulator</div>
+                <div class="game-callout-desc">Help our agentic cybernetic lobster dodge legacy slaw pipelines. A break-time essential.</div>
+            </div>
+            <span class="game-callout-icon" style="font-size: 1rem; color: var(--gray-300);">&#8250;</span>
+        </a>
+    </div>
 
     <!-- FAQ -->
     <section class="section faq-section" id="faq">
