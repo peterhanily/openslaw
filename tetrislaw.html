@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetrislaw — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .side-panel {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .side-panel.left { text-align: right; }
+        .side-panel.right { text-align: left; }
+
+        .hud-box {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.6rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hud-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.15rem;
+        }
+
+        .hud-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #e2e8f0;
+        }
+
+        .hud-value.green { color: #4ade80; }
+
+        .next-preview {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .next-preview canvas {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        canvas#game {
+            display: block;
+            touch-action: manipulation;
+            max-width: 100%;
+            height: auto;
+        }
+
+        canvas#nextCanvas {
+            display: block;
+        }
+
+        .touch-controls {
+            display: none;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .touch-btn {
+            width: 56px;
+            height: 50px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 0.5rem;
+            color: #4ade80;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: background 0.1s, border-color 0.1s;
+        }
+
+        .touch-btn:active {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: #4ade80;
+        }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #1e293b;
+            border: 1px solid #4ade80;
+            color: #4ade80;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: toastIn 0.3s ease forwards, toastOut 0.3s ease 2s forwards;
+            white-space: nowrap;
+        }
+
+        @keyframes toastIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        @media (pointer: coarse) {
+            .touch-controls { display: flex; }
+        }
+
+        @media (max-width: 600px) {
+            .game-area { flex-direction: column; align-items: center; }
+            .side-panel { flex-direction: row; width: auto; text-align: center; }
+            .side-panel.left { order: -1; }
+            .side-panel.right { order: 0; }
+            .hud-box { padding: 0.35rem 0.6rem; }
+            .hud-value { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>Tetris<span>law</span></h1>
+        <p>Stack the slaw. Clear the lines. Become the Lobster Whisperer.</p>
+    </div>
+
+    <div class="game-area">
+        <div class="side-panel left">
+            <div class="hud-box">
+                <div class="hud-label">Score</div>
+                <div class="hud-value" id="hudScore">0</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">Level</div>
+                <div class="hud-value green" id="hudLevel">1</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">Lines</div>
+                <div class="hud-value" id="hudLines">0</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">Best</div>
+                <div class="hud-value" id="hudBest">0</div>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <canvas id="game" width="300" height="600"></canvas>
+        </div>
+
+        <div class="side-panel right">
+            <div class="next-preview">
+                <div class="hud-label">Next</div>
+                <canvas id="nextCanvas" width="90" height="90"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="touch-controls">
+        <button class="touch-btn" id="btnLeft">&#9664;</button>
+        <button class="touch-btn" id="btnRotate">&#8635;</button>
+        <button class="touch-btn" id="btnDown">&#9660;</button>
+        <button class="touch-btn" id="btnHardDrop">&#9196;</button>
+        <button class="touch-btn" id="btnRight">&#9654;</button>
+    </div>
+
+    <div class="game-footer">
+        <a href="/">&#8592; Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Arrow keys to move &middot; Up to rotate &middot; Space to hard drop</div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // --- Constants ---
+        const COLS = 10;
+        const ROWS = 20;
+        const CELL = 30;
+        const WIDTH = COLS * CELL;
+        const HEIGHT = ROWS * CELL;
+
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        // --- Piece definitions ---
+        // Each piece: { name, color, shapes: [rotation0, rotation1, ...] }
+        // Each shape is a 2D array of rows; 1 = filled, 0 = empty
+        const PIECES = [
+            { // I - Carrot
+                name: 'I', color: '#f97316', emoji: '\u{1F955}',
+                shapes: [
+                    [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+                    [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
+                    [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
+                    [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]
+                ]
+            },
+            { // O - Lemon
+                name: 'O', color: '#eab308', emoji: '\u{1F34B}',
+                shapes: [
+                    [[1,1],[1,1]],
+                    [[1,1],[1,1]],
+                    [[1,1],[1,1]],
+                    [[1,1],[1,1]]
+                ]
+            },
+            { // T - Cabbage
+                name: 'T', color: '#4ade80', emoji: '\u{1F96C}',
+                shapes: [
+                    [[0,1,0],[1,1,1],[0,0,0]],
+                    [[0,1,0],[0,1,1],[0,1,0]],
+                    [[0,0,0],[1,1,1],[0,1,0]],
+                    [[0,1,0],[1,1,0],[0,1,0]]
+                ]
+            },
+            { // S - Olive
+                name: 'S', color: '#15803d', emoji: '\u{1FAD2}',
+                shapes: [
+                    [[0,1,1],[1,1,0],[0,0,0]],
+                    [[0,1,0],[0,1,1],[0,0,1]],
+                    [[0,0,0],[0,1,1],[1,1,0]],
+                    [[1,0,0],[1,1,0],[0,1,0]]
+                ]
+            },
+            { // Z - Chili
+                name: 'Z', color: '#ef4444', emoji: '\u{1F336}',
+                shapes: [
+                    [[1,1,0],[0,1,1],[0,0,0]],
+                    [[0,0,1],[0,1,1],[0,1,0]],
+                    [[0,0,0],[1,1,0],[0,1,1]],
+                    [[0,1,0],[1,1,0],[1,0,0]]
+                ]
+            },
+            { // L - Lobster
+                name: 'L', color: '#dc2626', emoji: '\u{1F99E}',
+                shapes: [
+                    [[0,0,1],[1,1,1],[0,0,0]],
+                    [[0,1,0],[0,1,0],[0,1,1]],
+                    [[0,0,0],[1,1,1],[1,0,0]],
+                    [[1,1,0],[0,1,0],[0,1,0]]
+                ]
+            },
+            { // J - Herb
+                name: 'J', color: '#0d9488', emoji: '\u{1F33F}',
+                shapes: [
+                    [[1,0,0],[1,1,1],[0,0,0]],
+                    [[0,1,1],[0,1,0],[0,1,0]],
+                    [[0,0,0],[1,1,1],[0,0,1]],
+                    [[0,1,0],[0,1,0],[1,1,0]]
+                ]
+            }
+        ];
+
+        const LEVEL_TITLES = {
+            1: 'Line Cook',
+            2: 'Sous Chef',
+            3: 'Head Chef',
+            5: 'Lobster Whisperer',
+            8: 'AGC: Artificial General Clearing'
+        };
+
+        const LINE_MESSAGES = [
+            null,
+            ['Nice chop!', 'Clean slice!', 'One line, one slaw!'],
+            ['Double dice!', 'Two-layer dip!', 'Stacking up nicely!'],
+            ['Triple julienne!', 'Three layers deep!', 'Chef\'s special!'],
+            ['\u{1F99E} LOBSTER TETRIS!', '\u{1F99E} LOBSTER TETRIS!', '\u{1F99E} QUADRUPLE SLAW!']
+        ];
+
+        // --- State ---
+        let board = [];
+        let current = null;  // { type, rotation, x, y }
+        let nextPieceType = null;
+        let score = 0;
+        let level = 1;
+        let lines = 0;
+        let bestScore = parseInt(localStorage.getItem('tetrislaw-best')) || 0;
+        let gameState = 'start'; // 'start', 'playing', 'paused', 'gameover'
+        let dropTimer = 0;
+        let lastTime = 0;
+        let lineClearAnim = null; // { rows: [], frame: 0 }
+        let bag = [];
+
+        // --- HUD ---
+        function updateHUD() {
+            document.getElementById('hudScore').textContent = score;
+            document.getElementById('hudLevel').textContent = level;
+            document.getElementById('hudLines').textContent = lines;
+            document.getElementById('hudBest').textContent = bestScore;
+        }
+
+        // --- Toast ---
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.textContent = msg;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+
+        // --- Board ---
+        function createBoard() {
+            board = [];
+            for (let r = 0; r < ROWS; r++) {
+                board.push(new Array(COLS).fill(null));
+            }
+        }
+
+        // --- Bag randomizer (7-bag) ---
+        function refillBag() {
+            bag = [0, 1, 2, 3, 4, 5, 6];
+            for (let i = bag.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [bag[i], bag[j]] = [bag[j], bag[i]];
+            }
+        }
+
+        function nextFromBag() {
+            if (bag.length === 0) refillBag();
+            return bag.pop();
+        }
+
+        // --- Piece helpers ---
+        function getShape(typeIdx, rotation) {
+            return PIECES[typeIdx].shapes[rotation];
+        }
+
+        function spawnPiece(typeIdx) {
+            const shape = getShape(typeIdx, 0);
+            const w = shape[0].length;
+            return {
+                type: typeIdx,
+                rotation: 0,
+                x: Math.floor((COLS - w) / 2),
+                y: 0
+            };
+        }
+
+        function collides(typeIdx, rotation, px, py) {
+            const shape = getShape(typeIdx, rotation);
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (!shape[r][c]) continue;
+                    const bx = px + c;
+                    const by = py + r;
+                    if (bx < 0 || bx >= COLS || by >= ROWS) return true;
+                    if (by >= 0 && board[by][bx] !== null) return true;
+                }
+            }
+            return false;
+        }
+
+        function lockPiece() {
+            const shape = getShape(current.type, current.rotation);
+            const color = PIECES[current.type].color;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (!shape[r][c]) continue;
+                    const bx = current.x + c;
+                    const by = current.y + r;
+                    if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) {
+                        board[by][bx] = color;
+                    }
+                }
+            }
+        }
+
+        // --- Line clearing ---
+        function getFullRows() {
+            const full = [];
+            for (let r = 0; r < ROWS; r++) {
+                if (board[r].every(cell => cell !== null)) {
+                    full.push(r);
+                }
+            }
+            return full;
+        }
+
+        function clearRows(rows) {
+            // Remove rows top-to-bottom (sorted ascending)
+            rows.sort((a, b) => a - b);
+            for (let i = rows.length - 1; i >= 0; i--) {
+                board.splice(rows[i], 1);
+            }
+            // Add empty rows at top
+            for (let i = 0; i < rows.length; i++) {
+                board.unshift(new Array(COLS).fill(null));
+            }
+        }
+
+        function scoreLines(count) {
+            const pts = [0, 100, 300, 500, 800];
+            score += pts[count] * level;
+            lines += count;
+
+            const newLevel = Math.floor(lines / 10) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                if (LEVEL_TITLES[level]) {
+                    showToast('\u{1F4C8} Level ' + level + ': ' + LEVEL_TITLES[level]);
+                } else {
+                    showToast('\u{1F4C8} Level ' + level + '!');
+                }
+            }
+
+            if (count > 0 && count <= 4) {
+                const msgs = LINE_MESSAGES[count];
+                const msg = msgs[Math.floor(Math.random() * msgs.length)];
+                showToast(msg);
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('tetrislaw-best', bestScore);
+            }
+
+            updateHUD();
+        }
+
+        // --- Ghost piece ---
+        function ghostY() {
+            if (!current) return 0;
+            let gy = current.y;
+            while (!collides(current.type, current.rotation, current.x, gy + 1)) {
+                gy++;
+            }
+            return gy;
+        }
+
+        // --- Drop speed ---
+        function dropInterval() {
+            return Math.max(100, 800 - (level - 1) * 60);
+        }
+
+        // --- Movement ---
+        function moveLeft() {
+            if (!current || gameState !== 'playing' || lineClearAnim) return;
+            if (!collides(current.type, current.rotation, current.x - 1, current.y)) {
+                current.x--;
+            }
+        }
+
+        function moveRight() {
+            if (!current || gameState !== 'playing' || lineClearAnim) return;
+            if (!collides(current.type, current.rotation, current.x + 1, current.y)) {
+                current.x++;
+            }
+        }
+
+        function softDrop() {
+            if (!current || gameState !== 'playing' || lineClearAnim) return;
+            if (!collides(current.type, current.rotation, current.x, current.y + 1)) {
+                current.y++;
+                score += 1;
+                updateHUD();
+                dropTimer = 0;
+            }
+        }
+
+        function hardDrop() {
+            if (!current || gameState !== 'playing' || lineClearAnim) return;
+            let dropped = 0;
+            while (!collides(current.type, current.rotation, current.x, current.y + 1)) {
+                current.y++;
+                dropped++;
+            }
+            score += dropped * 2;
+            updateHUD();
+            placePiece();
+        }
+
+        function rotate() {
+            if (!current || gameState !== 'playing' || lineClearAnim) return;
+            const newRot = (current.rotation + 1) % 4;
+            // Try normal rotation
+            if (!collides(current.type, newRot, current.x, current.y)) {
+                current.rotation = newRot;
+                return;
+            }
+            // Wall kick: try shift left
+            if (!collides(current.type, newRot, current.x - 1, current.y)) {
+                current.rotation = newRot;
+                current.x--;
+                return;
+            }
+            // Wall kick: try shift right
+            if (!collides(current.type, newRot, current.x + 1, current.y)) {
+                current.rotation = newRot;
+                current.x++;
+                return;
+            }
+            // Wall kick: try shift left 2 (for I-piece)
+            if (PIECES[current.type].name === 'I') {
+                if (!collides(current.type, newRot, current.x - 2, current.y)) {
+                    current.rotation = newRot;
+                    current.x -= 2;
+                    return;
+                }
+                if (!collides(current.type, newRot, current.x + 2, current.y)) {
+                    current.rotation = newRot;
+                    current.x += 2;
+                    return;
+                }
+            }
+        }
+
+        // --- Place piece and handle clears ---
+        function placePiece() {
+            lockPiece();
+            const fullRows = getFullRows();
+            if (fullRows.length > 0) {
+                lineClearAnim = { rows: fullRows, frame: 0, maxFrames: 12 };
+            } else {
+                spawnNext();
+            }
+        }
+
+        function spawnNext() {
+            current = spawnPiece(nextPieceType);
+            nextPieceType = nextFromBag();
+            drawNextPiece();
+
+            if (collides(current.type, current.rotation, current.x, current.y)) {
+                gameState = 'gameover';
+                if (score > bestScore) {
+                    bestScore = score;
+                    localStorage.setItem('tetrislaw-best', bestScore);
+                }
+                updateHUD();
+            }
+            dropTimer = 0;
+        }
+
+        // --- Drawing ---
+        function drawCell(ctx, x, y, color, alpha) {
+            const a = alpha !== undefined ? alpha : 1;
+            const px = x * CELL;
+            const py = y * CELL;
+
+            // Fill
+            ctx.globalAlpha = a;
+            ctx.fillStyle = color;
+            ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+
+            // Inner highlight (top-left lighter)
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillRect(px + 1, py + 1, CELL - 2, 3);
+            ctx.fillRect(px + 1, py + 1, 3, CELL - 2);
+
+            // Dark border
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(px + CELL - 3, py + 1, 2, CELL - 2);
+            ctx.fillRect(px + 1, py + CELL - 3, CELL - 2, 2);
+
+            ctx.globalAlpha = 1;
+        }
+
+        function drawBoard() {
+            // Background
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
+            for (let r = 0; r <= ROWS; r++) {
+                ctx.beginPath();
+                ctx.moveTo(0, r * CELL + 0.5);
+                ctx.lineTo(WIDTH, r * CELL + 0.5);
+                ctx.stroke();
+            }
+            for (let c = 0; c <= COLS; c++) {
+                ctx.beginPath();
+                ctx.moveTo(c * CELL + 0.5, 0);
+                ctx.lineTo(c * CELL + 0.5, HEIGHT);
+                ctx.stroke();
+            }
+
+            // Locked cells
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] !== null) {
+                        // Check if this row is in a line clear animation
+                        if (lineClearAnim && lineClearAnim.rows.includes(r)) {
+                            const flash = Math.sin(lineClearAnim.frame / lineClearAnim.maxFrames * Math.PI);
+                            ctx.fillStyle = 'rgba(255,255,255,' + (flash * 0.8) + ')';
+                            ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+                        } else {
+                            drawCell(ctx, c, r, board[r][c]);
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawGhost() {
+            if (!current || lineClearAnim) return;
+            const gy = ghostY();
+            if (gy === current.y) return;
+            const shape = getShape(current.type, current.rotation);
+            const color = PIECES[current.type].color;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (!shape[r][c]) continue;
+                    const bx = current.x + c;
+                    const by = gy + r;
+                    if (by >= 0) {
+                        drawCell(ctx, bx, by, color, 0.2);
+                    }
+                }
+            }
+        }
+
+        function drawCurrent() {
+            if (!current || lineClearAnim) return;
+            const shape = getShape(current.type, current.rotation);
+            const color = PIECES[current.type].color;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (!shape[r][c]) continue;
+                    const bx = current.x + c;
+                    const by = current.y + r;
+                    if (by >= 0) {
+                        drawCell(ctx, bx, by, color);
+                    }
+                }
+            }
+        }
+
+        function drawNextPiece() {
+            const nc = nextCanvas;
+            const nctx = nextCtx;
+            const cellSize = 18;
+            nctx.clearRect(0, 0, nc.width, nc.height);
+
+            const shape = getShape(nextPieceType, 0);
+            const color = PIECES[nextPieceType].color;
+            const h = shape.length;
+            const w = shape[0].length;
+            const offsetX = (nc.width - w * cellSize) / 2;
+            const offsetY = (nc.height - h * cellSize) / 2;
+
+            for (let r = 0; r < h; r++) {
+                for (let c = 0; c < w; c++) {
+                    if (!shape[r][c]) continue;
+                    const px = offsetX + c * cellSize;
+                    const py = offsetY + r * cellSize;
+
+                    nctx.fillStyle = color;
+                    nctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+
+                    nctx.fillStyle = 'rgba(255,255,255,0.18)';
+                    nctx.fillRect(px + 1, py + 1, cellSize - 2, 2);
+                    nctx.fillRect(px + 1, py + 1, 2, cellSize - 2);
+
+                    nctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    nctx.fillRect(px + cellSize - 3, py + 1, 2, cellSize - 2);
+                    nctx.fillRect(px + 1, py + cellSize - 3, cellSize - 2, 2);
+                }
+            }
+        }
+
+        function drawOverlay(title, lines) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Card background
+            const cardW = 240;
+            const cardH = 40 + lines.length * 28;
+            const cardX = (WIDTH - cardW) / 2;
+            const cardY = (HEIGHT - cardH) / 2 - 20;
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.3)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, cardX, cardY, cardW, cardH + 40, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            // Title
+            ctx.fillStyle = '#4ade80';
+            ctx.font = '800 22px Inter, sans-serif';
+            ctx.fillText(title, WIDTH / 2, cardY + 30);
+
+            // Lines
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '600 14px Inter, sans-serif';
+            for (let i = 0; i < lines.length; i++) {
+                const textColor = lines[i].startsWith('Best') ? '#4ade80' : '#e2e8f0';
+                ctx.fillStyle = textColor;
+                ctx.fillText(lines[i], WIDTH / 2, cardY + 65 + i * 28);
+            }
+
+            // Action hint
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 12px Inter, sans-serif';
+            ctx.fillText('Press Space / Tap to ' + (gameState === 'start' ? 'start' : 'restart'), WIDTH / 2, cardY + cardH + 28);
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        // --- Game loop ---
+        function gameLoop(timestamp) {
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            if (gameState === 'playing') {
+                // Line clear animation
+                if (lineClearAnim) {
+                    lineClearAnim.frame++;
+                    if (lineClearAnim.frame >= lineClearAnim.maxFrames) {
+                        const count = lineClearAnim.rows.length;
+                        clearRows(lineClearAnim.rows);
+                        scoreLines(count);
+                        lineClearAnim = null;
+                        spawnNext();
+                    }
+                } else {
+                    // Auto-drop
+                    dropTimer += dt;
+                    if (dropTimer >= dropInterval()) {
+                        dropTimer = 0;
+                        if (current && !collides(current.type, current.rotation, current.x, current.y + 1)) {
+                            current.y++;
+                        } else if (current) {
+                            placePiece();
+                        }
+                    }
+                }
+            }
+
+            // Draw
+            drawBoard();
+
+            if (gameState === 'playing') {
+                drawGhost();
+                drawCurrent();
+            }
+
+            if (gameState === 'start') {
+                drawOverlay('Tetrislaw', [
+                    '\u{1F96C} Stack the slaw pieces',
+                    '\u2190 \u2192 Move  \u2191 Rotate',
+                    '\u2193 Soft drop  Space Hard drop',
+                    'Clear lines to level up!'
+                ]);
+            } else if (gameState === 'gameover') {
+                drawOverlay('Game Over', [
+                    'Score: ' + score,
+                    'Lines: ' + lines,
+                    'Level: ' + level,
+                    'Best: ' + bestScore
+                ]);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Start / Restart ---
+        function startGame() {
+            createBoard();
+            score = 0;
+            level = 1;
+            lines = 0;
+            dropTimer = 0;
+            lineClearAnim = null;
+            bag = [];
+            refillBag();
+            nextPieceType = nextFromBag();
+            current = spawnPiece(nextFromBag());
+            nextPieceType = nextFromBag();
+            drawNextPiece();
+            updateHUD();
+            gameState = 'playing';
+            showToast('\u{1F96C} Level 1: Line Cook');
+        }
+
+        // --- Input ---
+        document.addEventListener('keydown', function(e) {
+            if (gameState === 'start' || gameState === 'gameover') {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+
+            if (gameState !== 'playing') return;
+
+            switch (e.code) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    moveLeft();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    moveRight();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    softDrop();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    rotate();
+                    break;
+                case 'Space':
+                    e.preventDefault();
+                    hardDrop();
+                    break;
+            }
+        });
+
+        // Touch buttons
+        document.getElementById('btnLeft').addEventListener('click', function() {
+            if (gameState === 'playing') moveLeft();
+        });
+        document.getElementById('btnRight').addEventListener('click', function() {
+            if (gameState === 'playing') moveRight();
+        });
+        document.getElementById('btnRotate').addEventListener('click', function() {
+            if (gameState === 'playing') rotate();
+        });
+        document.getElementById('btnDown').addEventListener('click', function() {
+            if (gameState === 'playing') softDrop();
+        });
+        document.getElementById('btnHardDrop').addEventListener('click', function() {
+            if (gameState === 'playing') hardDrop();
+        });
+
+        // Tap to start/restart on canvas
+        canvas.addEventListener('click', function() {
+            if (gameState === 'start' || gameState === 'gameover') {
+                startGame();
+            }
+        });
+
+        // Swipe gesture support
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        let touchMoved = false;
+
+        canvas.addEventListener('touchstart', function(e) {
+            const t = e.touches[0];
+            touchStartX = t.clientX;
+            touchStartY = t.clientY;
+            touchStartTime = Date.now();
+            touchMoved = false;
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', function(e) {
+            if (gameState !== 'playing') return;
+            const t = e.touches[0];
+            const dx = t.clientX - touchStartX;
+            const dy = t.clientY - touchStartY;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+
+            // Require minimum distance for swipe
+            if (absDx > 30 && absDx > absDy) {
+                touchMoved = true;
+                if (dx > 0) {
+                    moveRight();
+                } else {
+                    moveLeft();
+                }
+                touchStartX = t.clientX;
+                touchStartY = t.clientY;
+            } else if (absDy > 30 && absDy > absDx && dy > 0) {
+                touchMoved = true;
+                softDrop();
+                touchStartY = t.clientY;
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', function(e) {
+            if (!touchMoved && (Date.now() - touchStartTime) < 200) {
+                // Short tap - handled by click for start/restart
+            }
+        }, { passive: true });
+
+        // --- Init ---
+        bestScore = parseInt(localStorage.getItem('tetrislaw-best')) || 0;
+        updateHUD();
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+    })();
+    </script>
+</body>
+</html>

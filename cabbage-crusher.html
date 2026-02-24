@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabbage Crusher — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding: 1rem;
+            user-select: none;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        /* HUD */
+        .hud {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .hud-box {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .hud-box .label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hud-box .value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #e2e8f0;
+        }
+
+        .hud-box.timer .value {
+            color: #4ade80;
+        }
+
+        .hud-box.timer.warning .value {
+            color: #f87171;
+            animation: pulse-red 0.5s infinite alternate;
+        }
+
+        @keyframes pulse-red {
+            from { opacity: 1; }
+            to { opacity: 0.5; }
+        }
+
+        /* Game container */
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+            background: #0f172a;
+            padding: 0.75rem;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 3px;
+            touch-action: manipulation;
+            max-width: 420px;
+            width: calc(100vw - 3rem);
+        }
+
+        .cell {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #1e293b;
+            border-radius: 0.4rem;
+            border: 2px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+            position: relative;
+        }
+
+        .cell:active {
+            transform: scale(0.93);
+        }
+
+        .cell.selected {
+            border-color: #4ade80;
+            box-shadow: 0 0 14px rgba(74, 222, 128, 0.5), inset 0 0 8px rgba(74, 222, 128, 0.15);
+            z-index: 2;
+        }
+
+        .cell.hint {
+            border-color: #4ade80;
+            animation: hint-glow 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes hint-glow {
+            from { box-shadow: 0 0 6px rgba(74, 222, 128, 0.3); }
+            to { box-shadow: 0 0 18px rgba(74, 222, 128, 0.6); }
+        }
+
+        .cell.matched {
+            animation: match-clear 0.35s ease forwards;
+        }
+
+        @keyframes match-clear {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .cell.falling {
+            transition: transform var(--fall-duration, 0.3s) ease-in;
+        }
+
+        .cell.spawning {
+            animation: spawn-in 0.25s ease-out;
+        }
+
+        @keyframes spawn-in {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .cell.special-lobster {
+            background: linear-gradient(135deg, #1e293b 0%, #7f1d1d 100%);
+        }
+
+        .cell.special-shredder {
+            background: linear-gradient(135deg, #1e293b 0%, #1e3a5f 100%);
+        }
+
+        /* Swap animation */
+        .cell.swap-anim {
+            transition: transform 0.2s ease;
+            z-index: 5;
+        }
+
+        /* Chain text */
+        .chain-text {
+            position: absolute;
+            bottom: -1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #4ade80;
+            font-weight: 700;
+            white-space: nowrap;
+            animation: chain-fade 1.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes chain-fade {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Toast system */
+        .toast-container {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid #4ade80;
+            color: #4ade80;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            animation: toast-in 0.3s ease-out, toast-out 0.3s ease-in 1.5s forwards;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+        }
+
+        .toast.big {
+            font-size: 1.1rem;
+            border-color: #f87171;
+            color: #f87171;
+            box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+        }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(-20px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes toast-out {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Game over overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.92);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .overlay-card {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 2rem 2.5rem;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(74, 222, 128, 0.2), 0 0 0 1px rgba(255,255,255,0.08);
+            max-width: 320px;
+            width: 90%;
+        }
+
+        .overlay-card h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-card h2 span {
+            color: #4ade80;
+        }
+
+        .overlay-card .final-score {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #4ade80;
+            margin: 0.75rem 0 0.25rem;
+        }
+
+        .overlay-card .best-score {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-card .milestone-title {
+            font-size: 0.9rem;
+            color: #fbbf24;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .play-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 0.65rem 2rem;
+            border: none;
+            border-radius: 0.6rem;
+            background: #4ade80;
+            color: #0f172a;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .play-btn:hover {
+            background: #22c55e;
+        }
+
+        /* Start overlay */
+        .start-overlay .overlay-card p.desc {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin: 0.5rem 0 1rem;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 0.35rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-header">
+        <h1>🥬 Cabbage <span>Crusher</span></h1>
+        <p>Match-3 slaw ingredients before time runs out</p>
+    </div>
+
+    <div class="hud">
+        <div class="hud-box">
+            <div class="label">Score</div>
+            <div class="value" id="scoreDisplay">0</div>
+        </div>
+        <div class="hud-box">
+            <div class="label">Level</div>
+            <div class="value" id="levelDisplay">1</div>
+        </div>
+        <div class="hud-box timer" id="timerBox">
+            <div class="label">Time</div>
+            <div class="value" id="timerDisplay">60</div>
+        </div>
+        <div class="hud-box">
+            <div class="label">Best</div>
+            <div class="value" id="bestDisplay">0</div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Start overlay -->
+    <div class="overlay start-overlay active" id="startOverlay">
+        <div class="overlay-card">
+            <h2>🥬 Cabbage <span>Crusher</span></h2>
+            <p class="desc">
+                Swap ingredients to match 3 or more in a row.<br>
+                Match 4 for a 🦞 Lobster Bomb.<br>
+                Match 5 for a 🤖 AI Shredder.<br>
+                Score as high as you can in 60 seconds!
+            </p>
+            <button class="play-btn" id="startBtn">Start Crushing</button>
+        </div>
+    </div>
+
+    <!-- Game Over overlay -->
+    <div class="overlay" id="gameOverOverlay">
+        <div class="overlay-card">
+            <h2>Time's <span>Up!</span></h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="best-score" id="bestScoreText">Best: 0</div>
+            <div class="milestone-title" id="milestoneTitle"></div>
+            <button class="play-btn" id="restartBtn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="game-footer">
+        <a href="/">← Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Tap to select, tap adjacent to swap</div>
+    </div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ── Constants ──
+    const ROWS = 8;
+    const COLS = 8;
+    const PIECES = ['🥬', '🥕', '🍋', '🧅', '🫒', '🌿'];
+    const LOBSTER = '🦞';
+    const SHREDDER = '🤖';
+    const ROUND_TIME = 60;
+    const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000];
+    const MILESTONES = [
+        { score: 200, title: 'Slaw Apprentice' },
+        { score: 500, title: 'Combo Chef' },
+        { score: 1500, title: 'AI Sous Chef' },
+        { score: 3000, title: 'Principal Lobster Architect' },
+        { score: 5000, title: 'AGC Crusher' }
+    ];
+    const LS_KEY = 'cabbage-crusher-best';
+
+    // ── State ──
+    let board = [];        // board[row][col] = { type, special }
+    let cells = [];        // DOM references cells[row][col]
+    let selected = null;   // { row, col } or null
+    let score = 0;
+    let level = 1;
+    let timeLeft = ROUND_TIME;
+    let timerInterval = null;
+    let bestScore = parseInt(localStorage.getItem(LS_KEY)) || 0;
+    let comboCount = 0;
+    let processing = false;
+    let gameActive = false;
+    let reachedMilestones = new Set();
+    let animSpeed = 1;     // multiplier, gets faster at higher levels
+
+    // ── DOM refs ──
+    const gridEl = document.getElementById('grid');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerBox = document.getElementById('timerBox');
+    const bestDisplay = document.getElementById('bestDisplay');
+    const toastContainer = document.getElementById('toastContainer');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const finalScoreEl = document.getElementById('finalScore');
+    const bestScoreText = document.getElementById('bestScoreText');
+    const milestoneTitle = document.getElementById('milestoneTitle');
+
+    bestDisplay.textContent = bestScore;
+
+    // ── Utility ──
+    function randomPiece() {
+        // At higher levels, slightly favor lobster-themed fill (more 🥬)
+        return PIECES[Math.floor(Math.random() * PIECES.length)];
+    }
+
+    function sleep(ms) {
+        return new Promise(r => setTimeout(r, ms / animSpeed));
+    }
+
+    function getLevel(s) {
+        for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+            if (s >= LEVEL_THRESHOLDS[i]) return i + 1;
+        }
+        return 1;
+    }
+
+    // ── Toast system ──
+    function showToast(text, big) {
+        const t = document.createElement('div');
+        t.className = 'toast' + (big ? ' big' : '');
+        t.textContent = text;
+        toastContainer.appendChild(t);
+        setTimeout(() => t.remove(), 2000);
+    }
+
+    // ── Board initialization ──
+    function createBoard() {
+        board = [];
+        for (let r = 0; r < ROWS; r++) {
+            board[r] = [];
+            for (let c = 0; c < COLS; c++) {
+                let piece;
+                // Avoid initial matches
+                do {
+                    piece = randomPiece();
+                } while (
+                    (c >= 2 && board[r][c-1].type === piece && board[r][c-2].type === piece) ||
+                    (r >= 2 && board[r-1][c].type === piece && board[r-2][c].type === piece)
+                );
+                board[r][c] = { type: piece, special: null };
+            }
+        }
+    }
+
+    function buildGrid() {
+        gridEl.innerHTML = '';
+        cells = [];
+        for (let r = 0; r < ROWS; r++) {
+            cells[r] = [];
+            for (let c = 0; c < COLS; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.textContent = board[r][c].type;
+                bindCell(cell, r, c);
+                gridEl.appendChild(cell);
+                cells[r][c] = cell;
+            }
+        }
+    }
+
+    function bindCell(cell, r, c) {
+        let handled = false;
+        cell.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handled = true;
+            handleCellInput(r, c);
+        });
+        cell.addEventListener('click', () => {
+            if (handled) { handled = false; return; }
+            handleCellInput(r, c);
+        });
+    }
+
+    function handleCellInput(r, c) {
+        if (!gameActive || processing) return;
+
+        // If clicking a special piece directly (not during a swap selection)
+        if (board[r][c].special && selected === null) {
+            handleSpecialClick(r, c);
+            return;
+        }
+
+        onCellClick(r, c);
+    }
+
+    function renderBoard() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = cells[r][c];
+                const piece = board[r][c];
+                cell.textContent = piece.type || '';
+                cell.className = 'cell';
+                if (piece.special === 'lobster') cell.classList.add('special-lobster');
+                if (piece.special === 'shredder') cell.classList.add('special-shredder');
+            }
+        }
+    }
+
+    // ── Selection & swap ──
+    function onCellClick(r, c) {
+        if (!gameActive || processing) return;
+
+        if (selected === null) {
+            selected = { row: r, col: c };
+            cells[r][c].classList.add('selected');
+        } else if (selected.row === r && selected.col === c) {
+            // Deselect
+            cells[r][c].classList.remove('selected');
+            selected = null;
+        } else {
+            const sr = selected.row;
+            const sc = selected.col;
+            cells[sr][sc].classList.remove('selected');
+
+            // Check adjacency
+            const dr = Math.abs(r - sr);
+            const dc = Math.abs(c - sc);
+            if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+                // Attempt swap
+                doSwap(sr, sc, r, c);
+            } else {
+                // Not adjacent: select new cell
+                selected = { row: r, col: c };
+                cells[r][c].classList.add('selected');
+                return;
+            }
+            selected = null;
+        }
+    }
+
+    async function doSwap(r1, c1, r2, c2) {
+        processing = true;
+
+        // Animate swap
+        await animateSwap(r1, c1, r2, c2);
+
+        // Actually swap in board
+        swapBoard(r1, c1, r2, c2);
+        renderBoard();
+
+        // Check for matches
+        const matches = findAllMatches();
+        if (matches.length === 0) {
+            // No match: swap back
+            await sleep(100);
+            await animateSwap(r1, c1, r2, c2);
+            swapBoard(r1, c1, r2, c2);
+            renderBoard();
+            processing = false;
+            return;
+        }
+
+        // Process matches and cascades
+        comboCount = 0;
+        await processCascade();
+        processing = false;
+    }
+
+    function swapBoard(r1, c1, r2, c2) {
+        const temp = board[r1][c1];
+        board[r1][c1] = board[r2][c2];
+        board[r2][c2] = temp;
+    }
+
+    async function animateSwap(r1, c1, r2, c2) {
+        const cell1 = cells[r1][c1];
+        const cell2 = cells[r2][c2];
+        const dx = (c2 - c1);
+        const dy = (r2 - r1);
+        const size = cell1.offsetWidth + 3; // cell + gap
+
+        cell1.classList.add('swap-anim');
+        cell2.classList.add('swap-anim');
+        cell1.style.transform = `translate(${dx * size}px, ${dy * size}px)`;
+        cell2.style.transform = `translate(${-dx * size}px, ${-dy * size}px)`;
+
+        await sleep(200);
+
+        cell1.style.transform = '';
+        cell2.style.transform = '';
+        cell1.classList.remove('swap-anim');
+        cell2.classList.remove('swap-anim');
+    }
+
+    // ── Match finding ──
+    function findAllMatches() {
+        const matched = new Set();
+        const matchGroups = [];
+
+        // Horizontal
+        for (let r = 0; r < ROWS; r++) {
+            let c = 0;
+            while (c < COLS) {
+                const type = board[r][c].type;
+                if (!type || type === LOBSTER || type === SHREDDER) { c++; continue; }
+                let end = c + 1;
+                while (end < COLS && board[r][end].type === type) end++;
+                const len = end - c;
+                if (len >= 3) {
+                    const group = [];
+                    for (let i = c; i < end; i++) {
+                        matched.add(r * COLS + i);
+                        group.push({ row: r, col: i });
+                    }
+                    matchGroups.push(group);
+                }
+                c = end;
+            }
+        }
+
+        // Vertical
+        for (let c = 0; c < COLS; c++) {
+            let r = 0;
+            while (r < ROWS) {
+                const type = board[r][c].type;
+                if (!type || type === LOBSTER || type === SHREDDER) { r++; continue; }
+                let end = r + 1;
+                while (end < ROWS && board[end][c].type === type) end++;
+                const len = end - r;
+                if (len >= 3) {
+                    const group = [];
+                    for (let i = r; i < end; i++) {
+                        matched.add(i * COLS + c);
+                        group.push({ row: i, col: c });
+                    }
+                    matchGroups.push(group);
+                }
+                r = end;
+            }
+        }
+
+        return matchGroups;
+    }
+
+    // ── Process cascade ──
+    async function processCascade() {
+        let matches = findAllMatches();
+
+        while (matches.length > 0) {
+            comboCount++;
+
+            // Show combo toasts
+            if (comboCount === 2) showToast('2x Combo!');
+            else if (comboCount === 3) showToast('AI-Powered Chain! \u{1F916}');
+            else if (comboCount >= 4) showToast('Lobster Combo! \u{1F99E}', true);
+
+            if (comboCount >= 2) {
+                showChainText();
+            }
+
+            // Collect all matched positions and process specials
+            const toClear = new Set();
+            const specialsToActivate = [];
+
+            for (const group of matches) {
+                const len = group.length;
+                let specialPos = null;
+                let specialType = null;
+
+                if (len >= 5) {
+                    specialPos = group[Math.floor(len / 2)];
+                    specialType = 'shredder';
+                } else if (len === 4) {
+                    specialPos = group[Math.floor(len / 2)];
+                    specialType = 'lobster';
+                }
+
+                // Score
+                let basePoints = 0;
+                if (len >= 5) basePoints = 100;
+                else if (len === 4) basePoints = 60;
+                else basePoints = 30;
+                addScore(basePoints * comboCount);
+
+                for (const pos of group) {
+                    const key = pos.row * COLS + pos.col;
+                    // Check if this cell has a special that should activate
+                    const piece = board[pos.row][pos.col];
+                    if (piece.special === 'lobster') {
+                        specialsToActivate.push({ type: 'lobster', row: pos.row, col: pos.col });
+                    } else if (piece.special === 'shredder') {
+                        specialsToActivate.push({ type: 'shredder', row: pos.row, col: pos.col });
+                    }
+                    toClear.add(key);
+                }
+
+                // Mark special creation position (not cleared yet)
+                if (specialPos && specialType) {
+                    const key = specialPos.row * COLS + specialPos.col;
+                    // We'll place the special after clearing
+                    specialPos._specialType = specialType;
+                    specialPos._key = key;
+                }
+
+                // Store special creation info on group
+                group._specialPos = specialPos;
+                group._specialType = specialType;
+            }
+
+            // Activate specials that were caught in matches
+            for (const sp of specialsToActivate) {
+                if (sp.type === 'lobster') {
+                    addScore(200 * comboCount);
+                    showToast('Lobster Bomb! \u{1F99E}');
+                    // Clear entire row
+                    for (let c = 0; c < COLS; c++) {
+                        toClear.add(sp.row * COLS + c);
+                    }
+                } else if (sp.type === 'shredder') {
+                    addScore(300 * comboCount);
+                    showToast('AI Shredder! \u{1F916}');
+                    // Clear all of one random type
+                    const types = PIECES.filter(p => {
+                        for (let r = 0; r < ROWS; r++)
+                            for (let c = 0; c < COLS; c++)
+                                if (board[r][c].type === p) return true;
+                        return false;
+                    });
+                    if (types.length > 0) {
+                        const target = types[Math.floor(Math.random() * types.length)];
+                        for (let r = 0; r < ROWS; r++)
+                            for (let c = 0; c < COLS; c++)
+                                if (board[r][c].type === target) toClear.add(r * COLS + c);
+                    }
+                }
+            }
+
+            // Animate matched cells
+            for (const key of toClear) {
+                const r = Math.floor(key / COLS);
+                const c = key % COLS;
+                cells[r][c].classList.add('matched');
+            }
+
+            await sleep(350);
+
+            // Clear matched cells from board
+            for (const key of toClear) {
+                const r = Math.floor(key / COLS);
+                const c = key % COLS;
+                board[r][c] = { type: null, special: null };
+            }
+
+            // Place specials
+            for (const group of matches) {
+                if (group._specialPos && group._specialType) {
+                    const sp = group._specialPos;
+                    const st = group._specialType;
+                    // Only place if cell was cleared (not already re-populated)
+                    if (board[sp.row][sp.col].type === null) {
+                        if (st === 'lobster') {
+                            board[sp.row][sp.col] = { type: LOBSTER, special: 'lobster' };
+                        } else {
+                            board[sp.row][sp.col] = { type: SHREDDER, special: 'shredder' };
+                        }
+                    }
+                }
+            }
+
+            // Gravity
+            await applyGravity();
+
+            // Fill empty spaces from top
+            fillEmpty();
+            renderBoard();
+
+            // Spawn animation for new pieces
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (cells[r][c].classList.contains('new-piece')) {
+                        cells[r][c].classList.remove('new-piece');
+                        cells[r][c].classList.add('spawning');
+                    }
+                }
+            }
+
+            await sleep(250);
+
+            // Check for new matches
+            matches = findAllMatches();
+        }
+    }
+
+    async function applyGravity() {
+        let moved = false;
+        // Process column by column, bottom to top
+        for (let c = 0; c < COLS; c++) {
+            let writeRow = ROWS - 1;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][c].type !== null) {
+                    if (r !== writeRow) {
+                        board[writeRow][c] = board[r][c];
+                        board[r][c] = { type: null, special: null };
+                        moved = true;
+                    }
+                    writeRow--;
+                }
+            }
+        }
+
+        if (moved) {
+            renderBoard();
+            // Add falling animation class
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    if (board[r][c].type !== null) {
+                        cells[r][c].classList.add('falling');
+                    }
+                }
+            }
+            await sleep(200);
+        }
+    }
+
+    function fillEmpty() {
+        const lobsterBoost = level >= 3 ? 0.05 : 0; // slight chance of lobster appearance at higher levels
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (board[r][c].type === null) {
+                    // Small chance of bonus lobster at higher levels
+                    if (Math.random() < lobsterBoost) {
+                        board[r][c] = { type: LOBSTER, special: 'lobster' };
+                    } else {
+                        board[r][c] = { type: randomPiece(), special: null };
+                    }
+                    // Mark for spawn animation
+                    cells[r][c].classList.add('new-piece');
+                }
+            }
+        }
+    }
+
+    // ── Special activation by click ──
+    function handleSpecialClick(r, c) {
+        const piece = board[r][c];
+        if (!piece.special || !gameActive || processing) return false;
+
+        processing = true;
+
+        if (piece.special === 'lobster') {
+            activateLobster(r, c);
+        } else if (piece.special === 'shredder') {
+            activateShredder(r, c);
+        }
+
+        return true;
+    }
+
+    async function activateLobster(r, c) {
+        addScore(200);
+        showToast('Lobster Bomb! \u{1F99E}');
+
+        const toClear = new Set();
+        for (let col = 0; col < COLS; col++) {
+            toClear.add(r * COLS + col);
+        }
+
+        for (const key of toClear) {
+            const cr = Math.floor(key / COLS);
+            const cc = key % COLS;
+            cells[cr][cc].classList.add('matched');
+        }
+
+        await sleep(350);
+
+        for (const key of toClear) {
+            const cr = Math.floor(key / COLS);
+            const cc = key % COLS;
+            board[cr][cc] = { type: null, special: null };
+        }
+
+        await applyGravity();
+        fillEmpty();
+        renderBoard();
+        await sleep(250);
+
+        comboCount = 0;
+        await processCascade();
+        processing = false;
+    }
+
+    async function activateShredder(r, c) {
+        addScore(300);
+        showToast('AI Shredder! \u{1F916}');
+
+        const types = PIECES.filter(p => {
+            for (let rr = 0; rr < ROWS; rr++)
+                for (let cc = 0; cc < COLS; cc++)
+                    if (board[rr][cc].type === p) return true;
+            return false;
+        });
+
+        const toClear = new Set();
+        toClear.add(r * COLS + c);
+
+        if (types.length > 0) {
+            const target = types[Math.floor(Math.random() * types.length)];
+            for (let rr = 0; rr < ROWS; rr++)
+                for (let cc = 0; cc < COLS; cc++)
+                    if (board[rr][cc].type === target) toClear.add(rr * COLS + cc);
+        }
+
+        for (const key of toClear) {
+            const cr = Math.floor(key / COLS);
+            const cc = key % COLS;
+            cells[cr][cc].classList.add('matched');
+        }
+
+        await sleep(350);
+
+        for (const key of toClear) {
+            const cr = Math.floor(key / COLS);
+            const cc = key % COLS;
+            board[cr][cc] = { type: null, special: null };
+        }
+
+        await applyGravity();
+        fillEmpty();
+        renderBoard();
+        await sleep(250);
+
+        comboCount = 0;
+        await processCascade();
+        processing = false;
+    }
+
+
+    // ── Scoring & HUD ──
+    function addScore(pts) {
+        score += pts;
+        scoreDisplay.textContent = score;
+        updateLevel();
+        checkMilestones();
+    }
+
+    function updateLevel() {
+        const newLevel = getLevel(score);
+        if (newLevel !== level) {
+            level = newLevel;
+            levelDisplay.textContent = level;
+            animSpeed = 1 + (level - 1) * 0.15;
+            if (level > 1) showToast('Level ' + level + '!');
+        }
+    }
+
+    function checkMilestones() {
+        for (const m of MILESTONES) {
+            if (score >= m.score && !reachedMilestones.has(m.score)) {
+                reachedMilestones.add(m.score);
+                showToast(m.title, true);
+            }
+        }
+    }
+
+    function showChainText() {
+        if (comboCount >= 3) {
+            const el = document.createElement('div');
+            el.className = 'chain-text';
+            el.textContent = 'Deploying slaw agents...';
+            document.querySelector('.game-container').appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+    }
+
+    function getMilestoneTitle(s) {
+        let title = '';
+        for (const m of MILESTONES) {
+            if (s >= m.score) title = m.title;
+        }
+        return title;
+    }
+
+    // ── Timer ──
+    function startTimer() {
+        timeLeft = ROUND_TIME;
+        timerDisplay.textContent = timeLeft;
+        timerBox.classList.remove('warning');
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+
+            if (timeLeft <= 10) {
+                timerBox.classList.add('warning');
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endGame();
+            }
+        }, 1000);
+    }
+
+    // ── Game over ──
+    function endGame() {
+        gameActive = false;
+
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem(LS_KEY, bestScore);
+            bestDisplay.textContent = bestScore;
+        }
+
+        finalScoreEl.textContent = score;
+        bestScoreText.textContent = 'Best: ' + bestScore;
+
+        const mt = getMilestoneTitle(score);
+        milestoneTitle.textContent = mt || '';
+
+        gameOverOverlay.classList.add('active');
+    }
+
+    // ── Start / Restart ──
+    function startGame() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        score = 0;
+        level = 1;
+        comboCount = 0;
+        animSpeed = 1;
+        processing = false;
+        selected = null;
+        reachedMilestones = new Set();
+
+        scoreDisplay.textContent = '0';
+        levelDisplay.textContent = '1';
+        bestDisplay.textContent = bestScore;
+        timerBox.classList.remove('warning');
+
+        createBoard();
+        buildGrid();
+        renderBoard();
+
+        // Make sure no initial matches exist
+        ensureNoInitialMatches();
+
+        gameActive = true;
+        startTimer();
+    }
+
+    function ensureNoInitialMatches() {
+        let matches = findAllMatches();
+        let attempts = 0;
+        while (matches.length > 0 && attempts < 100) {
+            // Replace matched pieces
+            for (const group of matches) {
+                for (const pos of group) {
+                    let piece;
+                    do {
+                        piece = randomPiece();
+                    } while (piece === board[pos.row][pos.col].type);
+                    board[pos.row][pos.col] = { type: piece, special: null };
+                }
+            }
+            matches = findAllMatches();
+            attempts++;
+        }
+        renderBoard();
+    }
+
+    // ── Event listeners ──
+    document.getElementById('startBtn').addEventListener('click', () => {
+        startOverlay.classList.remove('active');
+        startGame();
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        gameOverOverlay.classList.remove('active');
+        startGame();
+    });
+
+})();
+</script>
+
+</body>
+</html>

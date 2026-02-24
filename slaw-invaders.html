@@ -20,7 +20,7 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -52,7 +52,12 @@
             box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        canvas { display: block; }
+        canvas {
+            display: block;
+            touch-action: manipulation;
+            max-width: 100%;
+            height: auto;
+        }
 
         .game-footer {
             text-align: center;
@@ -73,6 +78,49 @@
             color: #64748b;
             margin-top: 0.5rem;
         }
+
+        .touch-controls {
+            display: none;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0 1rem;
+        }
+
+        .touch-btn {
+            width: 70px;
+            height: 56px;
+            border-radius: 12px;
+            border: 2px solid rgba(74, 222, 128, 0.3);
+            background: rgba(30, 41, 59, 0.8);
+            color: #4ade80;
+            font-size: 1.5rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .touch-btn:active {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: #4ade80;
+        }
+
+        .touch-btn-fire {
+            width: 90px;
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+
+        .touch-btn-fire:active {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        @media (pointer: coarse), (max-width: 520px) {
+            .touch-controls { display: flex; }
+        }
     </style>
 </head>
 <body>
@@ -83,9 +131,14 @@
     <div class="game-container">
         <canvas id="game" width="500" height="600"></canvas>
     </div>
+    <div class="touch-controls">
+        <button class="touch-btn" id="btn-left">&#9664;</button>
+        <button class="touch-btn touch-btn-fire" id="btn-fire">&#128293;</button>
+        <button class="touch-btn" id="btn-right">&#9654;</button>
+    </div>
     <div class="game-footer">
         <a href="/">← Back to OpenSlaw.ai</a>
-        <div class="controls-hint">← → to move · Space to fire</div>
+        <div class="controls-hint">← → to move · Space to fire · Touch buttons on mobile</div>
     </div>
 
     <script>
@@ -1007,7 +1060,7 @@
             // Controls
             ctx.font = '400 11px Inter, sans-serif';
             ctx.fillStyle = '#475569';
-            ctx.fillText('← → to move  ·  Space to fire', W / 2, bossY + 88);
+            ctx.fillText('← → to move · Space to fire · Touch buttons on mobile', W / 2, bossY + 88);
 
             // High score
             if (highScore > 0) {
@@ -1137,6 +1190,79 @@
             draw();
             requestAnimationFrame(gameLoop);
         }
+
+        // ═══════════════════════════════
+        //   TOUCH CONTROLS
+        // ═══════════════════════════════
+
+        var touchControls = document.querySelector('.touch-controls');
+        var btnLeft = document.getElementById('btn-left');
+        var btnRight = document.getElementById('btn-right');
+        var btnFire = document.getElementById('btn-fire');
+
+        // Show touch controls on touch-capable devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            touchControls.style.display = 'flex';
+        }
+
+        // Left button
+        btnLeft.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            keys.left = true;
+        });
+        btnLeft.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            keys.left = false;
+        });
+        btnLeft.addEventListener('touchcancel', function(e) {
+            e.preventDefault();
+            keys.left = false;
+        });
+
+        // Right button
+        btnRight.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            keys.right = true;
+        });
+        btnRight.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            keys.right = false;
+        });
+        btnRight.addEventListener('touchcancel', function(e) {
+            e.preventDefault();
+            keys.right = false;
+        });
+
+        // Fire button
+        btnFire.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            keys.space = true;
+            if (state === STATE_MENU) {
+                state = STATE_PLAYING;
+                reset();
+            } else if (state === STATE_DEAD && deathFrameCount > 40) {
+                state = STATE_MENU;
+            }
+        });
+        btnFire.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            keys.space = false;
+        });
+        btnFire.addEventListener('touchcancel', function(e) {
+            e.preventDefault();
+            keys.space = false;
+        });
+
+        // Canvas tap handler for starting/restarting
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (state === STATE_MENU) {
+                state = STATE_PLAYING;
+                reset();
+            } else if (state === STATE_DEAD && deathFrameCount > 40) {
+                state = STATE_MENU;
+            }
+        });
 
         gameLoop();
     })();
