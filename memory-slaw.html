@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Slaw — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding: 1rem;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+            background: #0f172a;
+            padding: 1.25rem;
+            min-width: 340px;
+        }
+
+        /* Difficulty selector */
+        .difficulty-bar {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .diff-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diff-btn:hover {
+            border-color: #4ade80;
+            color: #e2e8f0;
+        }
+
+        .diff-btn.active {
+            background: #4ade80;
+            color: #0f172a;
+            border-color: #4ade80;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .stats-bar .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .stats-bar .stat-value {
+            color: #e2e8f0;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stats-bar .best-label {
+            color: #4ade80;
+        }
+
+        /* Card grid */
+        .card-grid {
+            display: grid;
+            gap: 0.6rem;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .card-grid.cols-4 {
+            grid-template-columns: repeat(4, 75px);
+        }
+
+        .card-grid.cols-6 {
+            grid-template-columns: repeat(6, 70px);
+        }
+
+        /* Card */
+        .card-cell {
+            perspective: 600px;
+            width: 75px;
+            height: 80px;
+        }
+
+        .cols-6 .card-cell {
+            width: 70px;
+            height: 75px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #334155;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-back {
+            background: #1e293b;
+            font-size: 1.8rem;
+            color: rgba(148, 163, 184, 0.2);
+            user-select: none;
+            /* subtle pattern overlay */
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(74, 222, 128, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(74, 222, 128, 0.03) 0%, transparent 50%);
+        }
+
+        .card-front {
+            background: #1e293b;
+            transform: rotateY(180deg);
+            font-size: 2.2rem;
+            user-select: none;
+        }
+
+        .cols-6 .card-front {
+            font-size: 2rem;
+        }
+
+        /* Matched state */
+        .card-inner.matched .card-face.card-front {
+            border-color: #4ade80;
+            box-shadow: 0 0 16px rgba(74, 222, 128, 0.3), inset 0 0 12px rgba(74, 222, 128, 0.08);
+        }
+
+        /* No-match flash */
+        .card-inner.no-match .card-face.card-front {
+            border-color: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+        }
+
+        /* Disable pointer on locked cards */
+        .card-inner.locked {
+            pointer-events: none;
+        }
+
+        /* Reset button */
+        .reset-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.9rem;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reset-btn:hover {
+            border-color: #4ade80;
+            color: #e2e8f0;
+        }
+
+        /* Toast notification */
+        .toast-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .toast-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 2rem 2.5rem;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(74, 222, 128, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            max-width: 340px;
+        }
+
+        .toast-overlay.visible .toast-card {
+            transform: scale(1);
+        }
+
+        .toast-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #4ade80;
+            margin-bottom: 0.75rem;
+        }
+
+        .toast-stats {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+
+        .toast-stats strong {
+            color: #e2e8f0;
+            font-weight: 700;
+        }
+
+        .toast-best {
+            font-size: 0.8rem;
+            color: #4ade80;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .toast-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: #4ade80;
+            color: #0f172a;
+            cursor: pointer;
+            margin-top: 1.25rem;
+            transition: background 0.2s ease;
+        }
+
+        .toast-btn:hover {
+            background: #22c55e;
+        }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🥬 Memory <span>Slaw</span></h1>
+        <p>Match the ingredients. Train your agentic recall.</p>
+    </div>
+    <div class="game-container">
+        <div class="difficulty-bar" id="difficultyBar"></div>
+        <div class="stats-bar" id="statsBar"></div>
+        <div class="card-grid" id="cardGrid"></div>
+        <button class="reset-btn" id="resetBtn">Reset</button>
+    </div>
+    <div class="toast-overlay" id="toastOverlay">
+        <div class="toast-card">
+            <div class="toast-title" id="toastTitle"></div>
+            <div class="toast-stats" id="toastStats"></div>
+            <div class="toast-best" id="toastBest"></div>
+            <button class="toast-btn" id="toastBtn">Play Again</button>
+        </div>
+    </div>
+    <div class="game-footer">
+        <a href="/">← Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Click or tap cards to flip</div>
+    </div>
+
+    <script>
+    (function() {
+        // ── State machine ──
+        var STATE_IDLE = 0, STATE_ONE_FLIPPED = 1, STATE_TWO_FLIPPED = 2, STATE_WON = 3;
+        var state = STATE_IDLE;
+
+        // ── Ingredients ──
+        var ALL_INGREDIENTS = ['🥬','🥕','🍋','🫒','🌿','🧂','🫚','🧅','🥒','🍎','🥑','🌶️'];
+
+        // ── Difficulties ──
+        var DIFFICULTIES = {
+            easy:   { label: 'Easy',   cols: 4, rows: 3, pairs: 6  },
+            medium: { label: 'Medium', cols: 4, rows: 4, pairs: 8  },
+            hard:   { label: 'Hard',   cols: 6, rows: 4, pairs: 12 }
+        };
+
+        var currentDifficulty = 'easy';
+        var cards = [];
+        var moves = 0;
+        var matchedCount = 0;
+        var totalPairs = 0;
+        var firstCard = null;
+        var secondCard = null;
+        var timerInterval = null;
+        var elapsedSeconds = 0;
+        var timerStarted = false;
+        var lockBoard = false;
+
+        // ── DOM refs ──
+        var difficultyBar = document.getElementById('difficultyBar');
+        var statsBar = document.getElementById('statsBar');
+        var cardGrid = document.getElementById('cardGrid');
+        var resetBtn = document.getElementById('resetBtn');
+        var toastOverlay = document.getElementById('toastOverlay');
+        var toastTitle = document.getElementById('toastTitle');
+        var toastStats = document.getElementById('toastStats');
+        var toastBest = document.getElementById('toastBest');
+        var toastBtn = document.getElementById('toastBtn');
+
+        // ── localStorage helpers ──
+        function getBestScore(diff) {
+            var val = localStorage.getItem('memory-slaw-best-' + diff);
+            return val ? parseInt(val, 10) : null;
+        }
+
+        function setBestScore(diff, score) {
+            localStorage.setItem('memory-slaw-best-' + diff, score.toString());
+        }
+
+        // ── Shuffle (Fisher-Yates) ──
+        function shuffle(arr) {
+            for (var i = arr.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = tmp;
+            }
+            return arr;
+        }
+
+        // ── Format time ──
+        function formatTime(s) {
+            var m = Math.floor(s / 60);
+            var sec = s % 60;
+            return (m > 0 ? m + 'm ' : '') + sec + 's';
+        }
+
+        // ── Build difficulty buttons ──
+        function buildDifficultyBar() {
+            difficultyBar.innerHTML = '';
+            var keys = ['easy', 'medium', 'hard'];
+            for (var i = 0; i < keys.length; i++) {
+                (function(key) {
+                    var btn = document.createElement('button');
+                    btn.className = 'diff-btn' + (key === currentDifficulty ? ' active' : '');
+                    btn.textContent = DIFFICULTIES[key].label;
+                    btn.addEventListener('click', function() {
+                        if (key !== currentDifficulty) {
+                            currentDifficulty = key;
+                            initGame();
+                        }
+                    });
+                    difficultyBar.appendChild(btn);
+                })(keys[i]);
+            }
+        }
+
+        // ── Render stats bar ──
+        function renderStats() {
+            var best = getBestScore(currentDifficulty);
+            var bestStr = best !== null ? best : '—';
+            statsBar.innerHTML =
+                '<div class="stat">Moves: <span class="stat-value" id="moveCount">' + moves + '</span></div>' +
+                '<div class="stat">Time: <span class="stat-value" id="timerDisplay">' + formatTime(elapsedSeconds) + '</span></div>' +
+                '<div class="stat"><span class="best-label">Best:</span> <span class="stat-value">' + bestStr + '</span></div>';
+        }
+
+        // ── Start timer ──
+        function startTimer() {
+            if (timerStarted) return;
+            timerStarted = true;
+            timerInterval = setInterval(function() {
+                elapsedSeconds++;
+                var el = document.getElementById('timerDisplay');
+                if (el) el.textContent = formatTime(elapsedSeconds);
+            }, 1000);
+        }
+
+        // ── Stop timer ──
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // ── Initialize game ──
+        function initGame() {
+            stopTimer();
+            state = STATE_IDLE;
+            moves = 0;
+            matchedCount = 0;
+            elapsedSeconds = 0;
+            timerStarted = false;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+
+            var diff = DIFFICULTIES[currentDifficulty];
+            totalPairs = diff.pairs;
+
+            // Pick random ingredients
+            var ingredients = shuffle(ALL_INGREDIENTS.slice()).slice(0, diff.pairs);
+            // Create pairs and shuffle
+            var deck = [];
+            for (var i = 0; i < ingredients.length; i++) {
+                deck.push(ingredients[i]);
+                deck.push(ingredients[i]);
+            }
+            shuffle(deck);
+
+            // Set grid class
+            cardGrid.className = 'card-grid' + (diff.cols === 6 ? ' cols-6' : ' cols-4');
+
+            // Build cards
+            cards = [];
+            cardGrid.innerHTML = '';
+            for (var i = 0; i < deck.length; i++) {
+                (function(index, emoji) {
+                    var cell = document.createElement('div');
+                    cell.className = 'card-cell';
+
+                    var inner = document.createElement('div');
+                    inner.className = 'card-inner';
+
+                    var back = document.createElement('div');
+                    back.className = 'card-face card-back';
+                    back.textContent = '?';
+
+                    var front = document.createElement('div');
+                    front.className = 'card-face card-front';
+                    front.textContent = emoji;
+
+                    inner.appendChild(back);
+                    inner.appendChild(front);
+                    cell.appendChild(inner);
+                    cardGrid.appendChild(cell);
+
+                    var cardObj = {
+                        index: index,
+                        emoji: emoji,
+                        el: inner,
+                        matched: false,
+                        flipped: false
+                    };
+                    cards.push(cardObj);
+
+                    inner.addEventListener('click', function() {
+                        onCardClick(cardObj);
+                    });
+                })(i, deck[i]);
+            }
+
+            buildDifficultyBar();
+            renderStats();
+            hideToast();
+        }
+
+        // ── Card click handler ──
+        function onCardClick(card) {
+            if (lockBoard) return;
+            if (card.matched) return;
+            if (card.flipped) return;
+
+            // Start timer on first interaction
+            startTimer();
+
+            // Flip the card
+            card.flipped = true;
+            card.el.classList.add('flipped');
+
+            if (state === STATE_IDLE) {
+                firstCard = card;
+                state = STATE_ONE_FLIPPED;
+            } else if (state === STATE_ONE_FLIPPED) {
+                secondCard = card;
+                state = STATE_TWO_FLIPPED;
+                moves++;
+                updateMoveDisplay();
+                checkForMatch();
+            }
+        }
+
+        function updateMoveDisplay() {
+            var el = document.getElementById('moveCount');
+            if (el) el.textContent = moves;
+        }
+
+        // ── Check match ──
+        function checkForMatch() {
+            if (firstCard.emoji === secondCard.emoji) {
+                // Match found
+                firstCard.matched = true;
+                secondCard.matched = true;
+                firstCard.el.classList.add('matched');
+                secondCard.el.classList.add('matched');
+                firstCard.el.classList.add('locked');
+                secondCard.el.classList.add('locked');
+                matchedCount++;
+
+                firstCard = null;
+                secondCard = null;
+                state = STATE_IDLE;
+
+                // Check win
+                if (matchedCount === totalPairs) {
+                    state = STATE_WON;
+                    stopTimer();
+                    onWin();
+                }
+            } else {
+                // No match — flash red then flip back
+                lockBoard = true;
+                firstCard.el.classList.add('no-match');
+                secondCard.el.classList.add('no-match');
+
+                var fc = firstCard;
+                var sc = secondCard;
+
+                setTimeout(function() {
+                    fc.el.classList.remove('no-match');
+                    sc.el.classList.remove('no-match');
+                    fc.el.classList.remove('flipped');
+                    sc.el.classList.remove('flipped');
+                    fc.flipped = false;
+                    sc.flipped = false;
+                    firstCard = null;
+                    secondCard = null;
+                    state = STATE_IDLE;
+                    lockBoard = false;
+                }, 800);
+            }
+        }
+
+        // ── Win handler ──
+        function onWin() {
+            var best = getBestScore(currentDifficulty);
+            var isNewBest = best === null || moves < best;
+            if (isNewBest) {
+                setBestScore(currentDifficulty, moves);
+            }
+
+            setTimeout(function() {
+                showToast(moves, elapsedSeconds, isNewBest);
+            }, 500);
+        }
+
+        // ── Toast ──
+        function showToast(totalMoves, totalTime, isNewBest) {
+            toastTitle.textContent = 'All pairs matched! 🎉';
+            toastStats.innerHTML =
+                'Moves: <strong>' + totalMoves + '</strong><br>' +
+                'Time: <strong>' + formatTime(totalTime) + '</strong><br>' +
+                'Difficulty: <strong>' + DIFFICULTIES[currentDifficulty].label + '</strong>';
+            toastBest.textContent = isNewBest ? 'New personal best!' : 'Best: ' + getBestScore(currentDifficulty) + ' moves';
+            toastOverlay.classList.add('visible');
+        }
+
+        function hideToast() {
+            toastOverlay.classList.remove('visible');
+        }
+
+        // ── Event listeners ──
+        resetBtn.addEventListener('click', function() {
+            initGame();
+        });
+
+        toastBtn.addEventListener('click', function() {
+            hideToast();
+            initGame();
+        });
+
+        // Close toast on overlay click (outside card)
+        toastOverlay.addEventListener('click', function(e) {
+            if (e.target === toastOverlay) {
+                hideToast();
+                initGame();
+            }
+        });
+
+        // ── Init ──
+        initGame();
+    })();
+    </script>
+</body>
+</html>

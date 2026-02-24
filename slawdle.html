@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slaw-dle — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding: 1rem;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+            background: #1e293b;
+            padding: 1rem;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* Board */
+        #board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .tile {
+            width: 58px;
+            height: 58px;
+            border: 2px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #e2e8f0;
+            border-radius: 6px;
+            transition: transform 0.1s;
+            perspective: 600px;
+        }
+
+        .tile.filled {
+            border-color: #64748b;
+            animation: pop 0.1s ease;
+        }
+
+        .tile.flip {
+            animation: flip 0.5s ease forwards;
+        }
+
+        .tile.correct {
+            background: #4ade80;
+            border-color: #4ade80;
+            color: #0f172a;
+        }
+
+        .tile.present {
+            background: #eab308;
+            border-color: #eab308;
+            color: #0f172a;
+        }
+
+        .tile.absent {
+            background: #374151;
+            border-color: #374151;
+            color: #e2e8f0;
+        }
+
+        .tile.shake {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 50%, 90% { transform: translateX(-4px); }
+            30%, 70% { transform: translateX(4px); }
+        }
+
+        /* Keyboard */
+        #keyboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kb-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .key {
+            height: 52px;
+            min-width: 32px;
+            padding: 0 8px;
+            border: none;
+            border-radius: 6px;
+            background: #475569;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            transition: background 0.2s, transform 0.1s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key:active {
+            transform: scale(0.95);
+        }
+
+        .key.wide {
+            min-width: 58px;
+            font-size: 0.7rem;
+        }
+
+        .key.correct {
+            background: #4ade80;
+            color: #0f172a;
+        }
+
+        .key.present {
+            background: #eab308;
+            color: #0f172a;
+        }
+
+        .key.absent {
+            background: #1e293b;
+            color: #64748b;
+        }
+
+        /* Toast */
+        #toast-container {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #e2e8f0;
+            color: #0f172a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 1.2s forwards;
+            white-space: nowrap;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Stats Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.2), 0 0 0 1px rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .modal h2 {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 1.2rem;
+            color: #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .distribution {
+            margin-bottom: 1.2rem;
+        }
+
+        .distribution h3 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 0.6rem;
+        }
+
+        .dist-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .dist-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            width: 12px;
+            text-align: right;
+            color: #e2e8f0;
+        }
+
+        .dist-bar {
+            height: 22px;
+            min-width: 22px;
+            background: #374151;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            transition: width 0.5s ease;
+        }
+
+        .dist-bar.highlight {
+            background: #4ade80;
+            color: #0f172a;
+        }
+
+        .share-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #4ade80;
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: background 0.2s;
+        }
+
+        .share-btn:hover {
+            background: #22c55e;
+        }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 420px) {
+            .tile {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            .key {
+                height: 46px;
+                min-width: 26px;
+                padding: 0 5px;
+                font-size: 0.75rem;
+            }
+            .key.wide {
+                min-width: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🥗 Slaw<span>-dle</span></h1>
+        <p>A daily word game for the culinary-minded. Guess the slaw term.</p>
+    </div>
+    <div class="game-container">
+        <div id="toast-container"></div>
+        <div id="board"></div>
+        <div id="keyboard"></div>
+    </div>
+    <div class="game-footer">
+        <a href="/">← Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Type or tap to guess — 6 tries to find the daily word</div>
+    </div>
+
+    <div class="modal-overlay" id="stats-modal">
+        <div class="modal">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h2>Statistics</h2>
+            <div class="stats-row" id="stats-row"></div>
+            <div class="distribution" id="distribution">
+                <h3>Guess Distribution</h3>
+                <div id="dist-bars"></div>
+            </div>
+            <button class="share-btn" id="share-btn">Share 📋</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ═══════════════════════════════
+        //   WORD LIST (~200 curated 5-letter food/kitchen/slaw terms)
+        // ═══════════════════════════════
+        var WORDS = [
+            'KNIFE','SHRED','LEMON','BRINE','HERBS','SLICE','GRATE','OLIVE','BLEND','CHIVE',
+            'ONION','PLATE','SERVE','WHISK','DOUGH','TOAST','ROAST','SALTY','TANGY','ZESTY',
+            'BROTH','SAUCE','SPICE','FEAST','CREAM','SAUTE','FLOUR','YEAST','PECAN','MELON',
+            'MANGO','GRAPE','THYME','BASIL','CURRY','STEAK','PRAWN','BREAD','SUGAR','HONEY',
+            'MAPLE','PEACH','BERRY','COCOA','CANDY','SALAD','RANCH','CIDER','STOCK','GLAZE',
+            'RINSE','PUREE','MINCE','FILET','POACH','STEAM','BROIL','CRISP','FLAKY','CHEWY',
+            'SWEET','SMOKY','FRESH','DRIED','CURED','CHUNK','GRIND','SCOOP','LADLE','TONGS',
+            'APRON','TIMER','BOWLS','PINTS','OUNCE','GRAIN','CRUMB','CRUST','SHELL','STUFF',
+            'BASTE','GLOSS','DRAPE','LAYER','STACK','PRESS','KNEAD','POUND','SHAPE','SCORE',
+            'BRUSH','STEEP','DRAIN','CHILL','STORE','COVER','SEIZE','BATCH','RATIO','YIELD',
+            'TABLE','BENCH','STOVE','FLAME','CEDAR','SEEDS','ROOTS','STEMS','BULBS','CLOVE',
+            'CUMIN','ANISE','DASHI','MIRIN','SUMAC','PASTE','ROLLS','WRAPS','TACOS','PIZZA',
+            'RAMEN','SUSHI','TAPAS','CREPE','TORTE','SCONE','TARTS','FUDGE','CHURN','SWIRL',
+            'FROST','DRIPS','POOLS','DUSTS','FLIPS','FOLDS','MELTS','SEARS','CHARS','PUFFS',
+            'RISES','RESTS','COOLS','DRIES','BOILS','FRIES','BAKES','CHOPS','DICES','ZESTS',
+            'JUICY','NUTTY','MILKY','OAKED','LIGHT','HEAVY','THICK','RUNNY','DENSE','LOOSE',
+            'PEELS','CHILE','MOREL','TROUT','SQUID','QUAIL','BISON','PANKO','GHEE!','BRISK',
+            'AROMA','TASTE','FEAST','MEALS','EATEN','MIXER','DICER','GRUEL','PILAF','NAANS',
+            'PESTO','AIOLI','SALSA','GRAVY','GLUTEN','DINER','GRILL','KEBAB','PATTY','NACHO',
+            'CACAO','MOCHA','LATTE','MATZO','BAGEL','CREMA','PHYLO','BEETS','CHARD','LEEKS'
+        ].filter(function(w) { return w.length === 5 && /^[A-Z]+$/.test(w); });
+
+        // Deduplicate
+        var seen = {};
+        var WORD_LIST = [];
+        for (var i = 0; i < WORDS.length; i++) {
+            if (!seen[WORDS[i]]) {
+                seen[WORDS[i]] = true;
+                WORD_LIST.push(WORDS[i]);
+            }
+        }
+
+        // ═══════════════════════════════
+        //   DAILY WORD SELECTION
+        // ═══════════════════════════════
+        function getTodayString() {
+            var d = new Date();
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+
+        function getDayNumber() {
+            // Days since a fixed epoch for numbering
+            var epoch = new Date(2024, 0, 1);
+            var now = new Date();
+            now.setHours(0,0,0,0);
+            return Math.floor((now - epoch) / 86400000);
+        }
+
+        function hashString(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                var ch = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + ch;
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        }
+
+        var todayStr = getTodayString();
+        var dayNumber = getDayNumber();
+        var dailyIndex = hashString(todayStr) % WORD_LIST.length;
+        var TARGET = WORD_LIST[dailyIndex];
+
+        // ═══════════════════════════════
+        //   GAME STATE
+        // ═══════════════════════════════
+        var MAX_GUESSES = 6;
+        var WORD_LENGTH = 5;
+        var currentRow = 0;
+        var currentCol = 0;
+        var guesses = []; // array of guess strings
+        var currentGuess = '';
+        var gameOver = false;
+        var gameWon = false;
+        var revealingRow = false;
+
+        // Key statuses: { letter: 'correct' | 'present' | 'absent' }
+        var keyStatus = {};
+
+        // ═══════════════════════════════
+        //   STATS (localStorage)
+        // ═══════════════════════════════
+        var STATS_KEY = 'slawdle-stats';
+
+        function loadStats() {
+            try {
+                var raw = localStorage.getItem(STATS_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch(e) {}
+            return {
+                gamesPlayed: 0,
+                gamesWon: 0,
+                currentStreak: 0,
+                maxStreak: 0,
+                guessDistribution: { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 },
+                lastPlayedDate: null,
+                lastCompletedDate: null
+            };
+        }
+
+        function saveStats(stats) {
+            try {
+                localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+            } catch(e) {}
+        }
+
+        var stats = loadStats();
+
+        function recordWin(guessNum) {
+            stats.gamesPlayed++;
+            stats.gamesWon++;
+            stats.guessDistribution[guessNum] = (stats.guessDistribution[guessNum] || 0) + 1;
+            stats.currentStreak++;
+            if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+            stats.lastPlayedDate = todayStr;
+            stats.lastCompletedDate = todayStr;
+            saveStats(stats);
+        }
+
+        function recordLoss() {
+            stats.gamesPlayed++;
+            stats.currentStreak = 0;
+            stats.lastPlayedDate = todayStr;
+            stats.lastCompletedDate = todayStr;
+            saveStats(stats);
+        }
+
+        // Check if already played today
+        var alreadyPlayed = stats.lastCompletedDate === todayStr;
+
+        // ═══════════════════════════════
+        //   SAVE / RESTORE TODAY'S GAME
+        // ═══════════════════════════════
+        var GAME_KEY = 'slawdle-game';
+
+        function saveGame() {
+            try {
+                localStorage.setItem(GAME_KEY, JSON.stringify({
+                    date: todayStr,
+                    guesses: guesses,
+                    gameOver: gameOver,
+                    gameWon: gameWon
+                }));
+            } catch(e) {}
+        }
+
+        function loadGame() {
+            try {
+                var raw = localStorage.getItem(GAME_KEY);
+                if (raw) {
+                    var g = JSON.parse(raw);
+                    if (g.date === todayStr) return g;
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // ═══════════════════════════════
+        //   DOM SETUP
+        // ═══════════════════════════════
+        var boardEl = document.getElementById('board');
+        var keyboardEl = document.getElementById('keyboard');
+        var toastContainer = document.getElementById('toast-container');
+
+        // Create board tiles
+        var tiles = [];
+        for (var r = 0; r < MAX_GUESSES; r++) {
+            var rowEl = document.createElement('div');
+            rowEl.className = 'row';
+            var rowTiles = [];
+            for (var c = 0; c < WORD_LENGTH; c++) {
+                var tile = document.createElement('div');
+                tile.className = 'tile';
+                rowEl.appendChild(tile);
+                rowTiles.push(tile);
+            }
+            boardEl.appendChild(rowEl);
+            tiles.push(rowTiles);
+        }
+
+        // Create keyboard
+        var KB_ROWS = [
+            ['Q','W','E','R','T','Y','U','I','O','P'],
+            ['A','S','D','F','G','H','J','K','L'],
+            ['ENTER','Z','X','C','V','B','N','M','DEL']
+        ];
+
+        var keyElements = {};
+
+        for (var r = 0; r < KB_ROWS.length; r++) {
+            var rowEl = document.createElement('div');
+            rowEl.className = 'kb-row';
+            for (var k = 0; k < KB_ROWS[r].length; k++) {
+                var keyVal = KB_ROWS[r][k];
+                var btn = document.createElement('button');
+                btn.className = 'key';
+                btn.textContent = keyVal;
+                btn.setAttribute('data-key', keyVal);
+                if (keyVal === 'ENTER' || keyVal === 'DEL') btn.classList.add('wide');
+                btn.addEventListener('click', (function(kv) {
+                    return function() { handleKey(kv); };
+                })(keyVal));
+                rowEl.appendChild(btn);
+                keyElements[keyVal] = btn;
+            }
+            keyboardEl.appendChild(rowEl);
+        }
+
+        // ═══════════════════════════════
+        //   TOAST SYSTEM
+        // ═══════════════════════════════
+        function showToast(msg, duration) {
+            var el = document.createElement('div');
+            el.className = 'toast';
+            el.textContent = msg;
+            toastContainer.appendChild(el);
+            var dur = duration || 1500;
+            setTimeout(function() {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, dur);
+        }
+
+        // ═══════════════════════════════
+        //   EVALUATION LOGIC
+        // ═══════════════════════════════
+        function evaluateGuess(guess, target) {
+            // Returns array of 'correct', 'present', 'absent'
+            var result = ['absent','absent','absent','absent','absent'];
+            var targetArr = target.split('');
+            var guessArr = guess.split('');
+            var used = [false, false, false, false, false];
+
+            // First pass: correct
+            for (var i = 0; i < 5; i++) {
+                if (guessArr[i] === targetArr[i]) {
+                    result[i] = 'correct';
+                    used[i] = true;
+                }
+            }
+
+            // Second pass: present
+            for (var i = 0; i < 5; i++) {
+                if (result[i] === 'correct') continue;
+                for (var j = 0; j < 5; j++) {
+                    if (!used[j] && guessArr[i] === targetArr[j]) {
+                        result[i] = 'present';
+                        used[j] = true;
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        // ═══════════════════════════════
+        //   REVEAL ANIMATION
+        // ═══════════════════════════════
+        function revealRow(rowIdx, guess, evaluation, callback) {
+            revealingRow = true;
+            var delay = 0;
+            for (var i = 0; i < WORD_LENGTH; i++) {
+                (function(idx, d) {
+                    setTimeout(function() {
+                        var tile = tiles[rowIdx][idx];
+                        tile.classList.add('flip');
+                        setTimeout(function() {
+                            tile.classList.add(evaluation[idx]);
+                            // Update keyboard
+                            var letter = guess[idx];
+                            var status = evaluation[idx];
+                            var cur = keyStatus[letter];
+                            if (status === 'correct') {
+                                keyStatus[letter] = 'correct';
+                            } else if (status === 'present' && cur !== 'correct') {
+                                keyStatus[letter] = 'present';
+                            } else if (status === 'absent' && !cur) {
+                                keyStatus[letter] = 'absent';
+                            }
+                            updateKeyboard();
+                        }, 250);
+                    }, d);
+                })(i, delay);
+                delay += 300;
+            }
+            setTimeout(function() {
+                revealingRow = false;
+                if (callback) callback();
+            }, delay + 250);
+        }
+
+        function updateKeyboard() {
+            for (var letter in keyStatus) {
+                if (keyElements[letter]) {
+                    keyElements[letter].className = 'key ' + keyStatus[letter];
+                }
+            }
+        }
+
+        // ═══════════════════════════════
+        //   SHAKE ROW
+        // ═══════════════════════════════
+        function shakeRow(rowIdx) {
+            for (var i = 0; i < WORD_LENGTH; i++) {
+                tiles[rowIdx][i].classList.add('shake');
+            }
+            setTimeout(function() {
+                for (var i = 0; i < WORD_LENGTH; i++) {
+                    tiles[rowIdx][i].classList.remove('shake');
+                }
+            }, 600);
+        }
+
+        // ═══════════════════════════════
+        //   STATS MODAL
+        // ═══════════════════════════════
+        var statsModal = document.getElementById('stats-modal');
+        var modalCloseBtn = document.getElementById('modal-close');
+        var shareBtn = document.getElementById('share-btn');
+
+        function showStats(lastGuessNum) {
+            var statsRow = document.getElementById('stats-row');
+            var distBars = document.getElementById('dist-bars');
+            var winPct = stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0;
+
+            statsRow.innerHTML =
+                '<div class="stat-item"><div class="stat-value">' + stats.gamesPlayed + '</div><div class="stat-label">Played</div></div>' +
+                '<div class="stat-item"><div class="stat-value">' + winPct + '</div><div class="stat-label">Win %</div></div>' +
+                '<div class="stat-item"><div class="stat-value">' + stats.currentStreak + '</div><div class="stat-label">Current<br>Streak</div></div>' +
+                '<div class="stat-item"><div class="stat-value">' + stats.maxStreak + '</div><div class="stat-label">Max<br>Streak</div></div>';
+
+            var maxDist = 0;
+            for (var g = 1; g <= 6; g++) {
+                var val = stats.guessDistribution[g] || 0;
+                if (val > maxDist) maxDist = val;
+            }
+
+            var html = '';
+            for (var g = 1; g <= 6; g++) {
+                var val = stats.guessDistribution[g] || 0;
+                var pct = maxDist > 0 ? Math.max(8, (val / maxDist) * 100) : 8;
+                var isHighlight = (lastGuessNum && g === lastGuessNum && gameWon) ? ' highlight' : '';
+                html += '<div class="dist-row">' +
+                    '<div class="dist-label">' + g + '</div>' +
+                    '<div class="dist-bar' + isHighlight + '" style="width:' + pct + '%">' + val + '</div>' +
+                    '</div>';
+            }
+            distBars.innerHTML = html;
+
+            shareBtn.style.display = gameOver ? 'block' : 'none';
+            statsModal.classList.add('show');
+        }
+
+        modalCloseBtn.addEventListener('click', function() {
+            statsModal.classList.remove('show');
+        });
+
+        statsModal.addEventListener('click', function(e) {
+            if (e.target === statsModal) statsModal.classList.remove('show');
+        });
+
+        // ═══════════════════════════════
+        //   SHARE
+        // ═══════════════════════════════
+        shareBtn.addEventListener('click', function() {
+            var emojiMap = { correct: '🟩', present: '🟨', absent: '⬛' };
+            var lines = ['Slaw-dle #' + dayNumber + ' ' + (gameWon ? guesses.length : 'X') + '/6', ''];
+            for (var i = 0; i < guesses.length; i++) {
+                var ev = evaluateGuess(guesses[i], TARGET);
+                var line = '';
+                for (var j = 0; j < ev.length; j++) {
+                    line += emojiMap[ev[j]];
+                }
+                lines.push(line);
+            }
+            var text = lines.join('\n');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast('Copied to clipboard!');
+                });
+            } else {
+                // Fallback
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('Copied to clipboard!');
+            }
+        });
+
+        // ═══════════════════════════════
+        //   WIN / LOSS MESSAGES
+        // ═══════════════════════════════
+        var WIN_MESSAGES = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'];
+
+        function handleGameEnd() {
+            if (gameWon) {
+                var msgIdx = Math.min(guesses.length - 1, WIN_MESSAGES.length - 1);
+                showToast(WIN_MESSAGES[msgIdx], 2500);
+                setTimeout(function() { showStats(guesses.length); }, 2000);
+            } else {
+                showToast(TARGET, 3500);
+                setTimeout(function() { showStats(null); }, 2500);
+            }
+        }
+
+        // ═══════════════════════════════
+        //   INPUT HANDLING
+        // ═══════════════════════════════
+        function handleKey(key) {
+            if (gameOver || revealingRow) return;
+
+            if (key === 'ENTER') {
+                if (currentGuess.length < WORD_LENGTH) {
+                    showToast('Not enough letters');
+                    shakeRow(currentRow);
+                    return;
+                }
+
+                var guess = currentGuess.toUpperCase();
+
+                // Accept any 5-letter alpha string
+                if (!/^[A-Z]{5}$/.test(guess)) {
+                    showToast('Invalid word');
+                    shakeRow(currentRow);
+                    return;
+                }
+
+                var evaluation = evaluateGuess(guess, TARGET);
+                guesses.push(guess);
+
+                var won = guess === TARGET;
+                var row = currentRow;
+
+                revealRow(row, guess, evaluation, function() {
+                    if (won) {
+                        gameOver = true;
+                        gameWon = true;
+                        if (!alreadyPlayed) recordWin(guesses.length);
+                        saveGame();
+                        handleGameEnd();
+                    } else if (guesses.length >= MAX_GUESSES) {
+                        gameOver = true;
+                        gameWon = false;
+                        if (!alreadyPlayed) recordLoss();
+                        saveGame();
+                        handleGameEnd();
+                    } else {
+                        saveGame();
+                    }
+                });
+
+                currentRow++;
+                currentGuess = '';
+                currentCol = 0;
+                return;
+            }
+
+            if (key === 'DEL' || key === 'BACKSPACE') {
+                if (currentGuess.length > 0) {
+                    currentGuess = currentGuess.slice(0, -1);
+                    currentCol--;
+                    tiles[currentRow][currentCol].textContent = '';
+                    tiles[currentRow][currentCol].classList.remove('filled');
+                }
+                return;
+            }
+
+            // Letter input
+            if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
+                currentGuess += key;
+                tiles[currentRow][currentCol].textContent = key;
+                tiles[currentRow][currentCol].classList.add('filled');
+                currentCol++;
+            }
+        }
+
+        // Physical keyboard
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (statsModal.classList.contains('show')) {
+                if (e.key === 'Escape') statsModal.classList.remove('show');
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleKey('ENTER');
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                handleKey('DEL');
+            } else if (/^[a-zA-Z]$/.test(e.key)) {
+                handleKey(e.key.toUpperCase());
+            }
+        });
+
+        // ═══════════════════════════════
+        //   RESTORE SAVED GAME
+        // ═══════════════════════════════
+        function restoreGame() {
+            var saved = loadGame();
+            if (!saved) return;
+
+            var savedGuesses = saved.guesses || [];
+            for (var i = 0; i < savedGuesses.length; i++) {
+                var guess = savedGuesses[i];
+                var evaluation = evaluateGuess(guess, TARGET);
+                guesses.push(guess);
+
+                // Fill tiles immediately (no animation)
+                for (var c = 0; c < WORD_LENGTH; c++) {
+                    tiles[i][c].textContent = guess[c];
+                    tiles[i][c].classList.add('filled', evaluation[c]);
+
+                    // Update key status
+                    var letter = guess[c];
+                    var status = evaluation[c];
+                    var cur = keyStatus[letter];
+                    if (status === 'correct') {
+                        keyStatus[letter] = 'correct';
+                    } else if (status === 'present' && cur !== 'correct') {
+                        keyStatus[letter] = 'present';
+                    } else if (status === 'absent' && !cur) {
+                        keyStatus[letter] = 'absent';
+                    }
+                }
+                currentRow++;
+            }
+            updateKeyboard();
+
+            if (saved.gameOver) {
+                gameOver = true;
+                gameWon = saved.gameWon;
+                alreadyPlayed = true;
+                // Show stats after a short delay
+                setTimeout(function() { showStats(gameWon ? guesses.length : null); }, 500);
+            }
+        }
+
+        restoreGame();
+
+    })();
+    </script>
+</body>
+</html>

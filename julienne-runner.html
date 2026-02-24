@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julienne Runner — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        canvas { display: block; }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🦞 Julienne <span>Runner</span></h1>
+        <p>Run. Jump. Julienne everything in your path.</p>
+    </div>
+    <div class="game-container">
+        <canvas id="game" width="600" height="300"></canvas>
+    </div>
+    <div class="game-footer">
+        <a href="/">← Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Space / Tap to jump · Double-jump available</div>
+    </div>
+
+    <script>
+    (function() {
+        var canvas = document.getElementById('game');
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width;
+        var H = canvas.height;
+
+        var STATE_MENU = 0, STATE_PLAYING = 1, STATE_DEAD = 2;
+        var state = STATE_MENU;
+        var distance = 0;
+        var highScore = parseInt(localStorage.getItem('julienne-runner-high') || '0');
+        var frameCount = 0;
+        var globalFrame = 0;
+
+        // Ground
+        var GROUND_H = 50;
+        var GROUND_Y = H - GROUND_H;
+        var groundX = 0;
+
+        // Game speed
+        var gameSpeed = 4;
+        var MAX_SPEED = 10;
+        var speedTimer = 0;
+
+        // Lobster
+        var lobster = {
+            x: 70, y: GROUND_Y - 40, w: 40, h: 40,
+            vy: 0, jumpCount: 0, onGround: true
+        };
+        var GRAVITY = 0.6;
+        var JUMP_POWER = -11;
+        var MAX_JUMPS = 2;
+
+        // Obstacles
+        var obstacles = [];
+        var obstacleTimer = 0;
+        var OBSTACLE_MIN_INTERVAL = 60;
+        var OBSTACLE_TYPES = [
+            { emoji: '🍇', name: 'Raisins', w: 25, h: 25, tall: false },
+            { emoji: '🍍', name: 'Pineapple', w: 32, h: 35, tall: false },
+            { emoji: '🥛', name: 'Mayo', w: 50, h: 22, tall: false },
+            { emoji: '🍇', name: 'Tall Raisins', w: 28, h: 50, tall: true },
+            { emoji: '🍍', name: 'Tall Pineapple', w: 35, h: 55, tall: true }
+        ];
+
+        // Carrots (collectibles)
+        var carrots = [];
+        var carrotTimer = 0;
+        var bonusScore = 0;
+
+        // Particles
+        var particles = [];
+
+        // Toasts
+        var toasts = [];
+
+        // Milestones
+        var milestones = [
+            { at: 100,  msg: 'Warming up the knife...' },
+            { at: 500,  msg: 'Julienne apprentice!' },
+            { at: 1000, msg: 'Cuts are getting clean!' },
+            { at: 2500, msg: 'Master julienner!' },
+            { at: 5000, msg: 'Approaching AGC...' }
+        ];
+        var milestonesHit = {};
+
+        // Parallax background - shelf items
+        var shelfItems = [];
+        for (var i = 0; i < 8; i++) {
+            shelfItems.push({
+                x: i * 90 + Math.random() * 40,
+                type: Math.floor(Math.random() * 4),
+                w: 20 + Math.random() * 20,
+                h: 30 + Math.random() * 25
+            });
+        }
+
+        function reset() {
+            lobster.y = GROUND_Y - lobster.h;
+            lobster.vy = 0;
+            lobster.jumpCount = 0;
+            lobster.onGround = true;
+            obstacles = [];
+            carrots = [];
+            particles = [];
+            toasts = [];
+            obstacleTimer = 0;
+            carrotTimer = 0;
+            distance = 0;
+            bonusScore = 0;
+            gameSpeed = 4;
+            speedTimer = 0;
+            frameCount = 0;
+            milestonesHit = {};
+            groundX = 0;
+        }
+
+        function jump() {
+            if (state === STATE_MENU) {
+                state = STATE_PLAYING;
+                reset();
+                lobster.vy = JUMP_POWER;
+                lobster.jumpCount = 1;
+                lobster.onGround = false;
+                spawnJumpParticles();
+            } else if (state === STATE_PLAYING) {
+                if (lobster.jumpCount < MAX_JUMPS) {
+                    lobster.vy = JUMP_POWER;
+                    lobster.jumpCount++;
+                    lobster.onGround = false;
+                    spawnJumpParticles();
+                    if (lobster.jumpCount === 2) {
+                        addToast('Double jump!', lobster.x + 20, lobster.y - 10, '#fbbf24');
+                    }
+                }
+            } else if (state === STATE_DEAD && frameCount > 30) {
+                state = STATE_MENU;
+            }
+        }
+
+        function spawnJumpParticles() {
+            for (var i = 0; i < 5; i++) {
+                particles.push({
+                    x: lobster.x + lobster.w / 2 + (Math.random() - 0.5) * 20,
+                    y: lobster.y + lobster.h,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 1 + Math.random() * 2,
+                    life: 12 + Math.random() * 8,
+                    maxLife: 20,
+                    type: 'dust'
+                });
+            }
+        }
+
+        function spawnDeathParticles() {
+            var emojis = ['💥', '✨', '⚡', '🔪'];
+            for (var i = 0; i < 18; i++) {
+                particles.push({
+                    x: lobster.x + lobster.w / 2,
+                    y: lobster.y + lobster.h / 2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 3,
+                    life: 40 + Math.random() * 30,
+                    maxLife: 70,
+                    type: 'emoji',
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    size: 10 + Math.random() * 14
+                });
+            }
+            for (var i = 0; i < 12; i++) {
+                particles.push({
+                    x: lobster.x + lobster.w / 2,
+                    y: lobster.y + lobster.h / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    life: 15 + Math.random() * 10,
+                    maxLife: 25,
+                    type: 'spark'
+                });
+            }
+        }
+
+        function spawnCarrotCollectParticles(cx, cy) {
+            for (var i = 0; i < 6; i++) {
+                particles.push({
+                    x: cx, y: cy,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    life: 15, maxLife: 15,
+                    type: 'spark'
+                });
+            }
+        }
+
+        // Input
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+        });
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', function(e) { e.preventDefault(); jump(); });
+
+        function addToast(msg, x, y, color) {
+            toasts.push({ msg: msg, x: x, y: y, life: 55, color: color || '#4ade80' });
+        }
+
+        function spawnObstacle() {
+            var type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+            obstacles.push({
+                x: W + 10,
+                y: GROUND_Y - type.h,
+                w: type.w,
+                h: type.h,
+                emoji: type.emoji,
+                name: type.name,
+                tall: type.tall
+            });
+        }
+
+        function spawnCarrot() {
+            var yBase = GROUND_Y - 70 - Math.random() * 60;
+            carrots.push({
+                x: W + 10,
+                y: yBase,
+                w: 24, h: 24,
+                collected: false,
+                bobPhase: Math.random() * Math.PI * 2
+            });
+        }
+
+        function getDisplayDistance() {
+            return Math.floor(distance);
+        }
+
+        // ═══════════════════════════════
+        //   DRAW LOBSTER
+        // ═══════════════════════════════
+
+        function drawLobsterCharacter(x, y, w, h, alpha) {
+            ctx.save();
+            ctx.globalAlpha = alpha !== undefined ? alpha : 1;
+
+            var cx = x + w / 2;
+            var cy = y + h / 2;
+
+            // Body (main oval)
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + 2, w * 0.35, h * 0.32, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body highlight
+            var bg = ctx.createLinearGradient(cx, cy - h * 0.3, cx, cy + h * 0.3);
+            bg.addColorStop(0, 'rgba(255,180,180,0.35)');
+            bg.addColorStop(0.5, 'rgba(255,255,255,0.1)');
+            bg.addColorStop(1, 'rgba(0,0,0,0.2)');
+            ctx.fillStyle = bg;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + 2, w * 0.35, h * 0.32, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tail
+            ctx.fillStyle = '#dc2626';
+            for (var t = -1; t <= 1; t++) {
+                ctx.beginPath();
+                ctx.ellipse(x + 2, cy + t * 4, 5, 3, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Legs (walking animation)
+            ctx.strokeStyle = '#b91c1c';
+            ctx.lineWidth = 2;
+            var legPhase = globalFrame * 0.25;
+            for (var l = 0; l < 3; l++) {
+                var lx = cx - 6 + l * 6;
+                var legOff = Math.sin(legPhase + l * 1.5) * 3;
+                ctx.beginPath();
+                ctx.moveTo(lx, cy + h * 0.22);
+                ctx.lineTo(lx + legOff, cy + h * 0.48);
+                ctx.stroke();
+            }
+
+            // Head
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.ellipse(x + w - 8, cy - 1, 7, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head highlight
+            var hg = ctx.createLinearGradient(x + w - 14, cy - 8, x + w - 2, cy + 8);
+            hg.addColorStop(0, 'rgba(255,180,180,0.3)');
+            hg.addColorStop(1, 'rgba(0,0,0,0.15)');
+            ctx.fillStyle = hg;
+            ctx.beginPath();
+            ctx.ellipse(x + w - 8, cy - 1, 7, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(x + w - 5, cy - 4, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(x + w - 5, cy - 4, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#bbf7d0';
+            ctx.beginPath();
+            ctx.arc(x + w - 5, cy - 4, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Antennae
+            ctx.strokeStyle = '#b91c1c';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + w - 4, cy - 8);
+            ctx.lineTo(x + w + 4, cy - 18);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + w - 6, cy - 8);
+            ctx.lineTo(x + w - 1, cy - 20);
+            ctx.stroke();
+            // Antenna tips
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(x + w + 4, cy - 18, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w - 1, cy - 20, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Top claw
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x + w - 3, cy - 4);
+            ctx.lineTo(x + w + 10, cy - 12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + w + 10, cy - 12);
+            ctx.lineTo(x + w + 4, cy - 4);
+            ctx.stroke();
+
+            // Bottom claw
+            ctx.beginPath();
+            ctx.moveTo(x + w - 3, cy + 3);
+            ctx.lineTo(x + w + 10, cy + 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + w + 10, cy + 10);
+            ctx.lineTo(x + w + 4, cy + 3);
+            ctx.stroke();
+
+            // Claw tips glow
+            var pulse = Math.sin(globalFrame * 0.12) * 0.3 + 0.7;
+            ctx.fillStyle = '#4ade80';
+            ctx.shadowColor = '#4ade80';
+            ctx.shadowBlur = 4 * pulse;
+            ctx.beginPath();
+            ctx.arc(x + w + 10, cy - 12, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w + 10, cy + 10, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.restore();
+        }
+
+        // ═══════════════════════════════
+        //   DRAWING FUNCTIONS
+        // ═══════════════════════════════
+
+        function drawBackground() {
+            // Far layer: dark kitchen wall
+            var grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+            grad.addColorStop(0, '#0f1a2a');
+            grad.addColorStop(0.6, '#162032');
+            grad.addColorStop(1, '#1a2a3a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, GROUND_Y);
+
+            // Mid layer: shelf silhouettes
+            var shelfY = 60;
+            ctx.fillStyle = 'rgba(255,255,255,0.02)';
+            ctx.fillRect(0, shelfY, W, 4);
+
+            var shelfScrollX = -(globalFrame * 0.3) % 720;
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            for (var i = 0; i < shelfItems.length; i++) {
+                var si = shelfItems[i];
+                var sx = si.x + shelfScrollX;
+                if (sx < -60) sx += 720;
+                // Jar / bottle silhouettes
+                if (si.type === 0) {
+                    // Tall jar
+                    roundRect(ctx, sx, shelfY - si.h, si.w, si.h, 4);
+                    ctx.fill();
+                } else if (si.type === 1) {
+                    // Short wide jar
+                    roundRect(ctx, sx, shelfY - si.h * 0.6, si.w * 1.2, si.h * 0.6, 3);
+                    ctx.fill();
+                } else if (si.type === 2) {
+                    // Bottle
+                    ctx.beginPath();
+                    ctx.rect(sx + si.w * 0.3, shelfY - si.h, si.w * 0.4, si.h * 0.35);
+                    ctx.rect(sx, shelfY - si.h * 0.65, si.w, si.h * 0.65);
+                    ctx.fill();
+                } else {
+                    // Round jar
+                    ctx.beginPath();
+                    ctx.arc(sx + si.w / 2, shelfY - si.h * 0.4, si.w * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Second shelf
+            var shelf2Y = 130;
+            ctx.fillStyle = 'rgba(255,255,255,0.015)';
+            ctx.fillRect(0, shelf2Y, W, 3);
+            ctx.fillStyle = 'rgba(255,255,255,0.02)';
+            for (var i = 0; i < shelfItems.length; i++) {
+                var si = shelfItems[i];
+                var sx = si.x + shelfScrollX + 40;
+                if (sx < -60) sx += 720;
+                roundRect(ctx, sx, shelf2Y - si.h * 0.5, si.w * 0.8, si.h * 0.5, 3);
+                ctx.fill();
+            }
+        }
+
+        function drawGround() {
+            // Main cutting board surface
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(0, GROUND_Y, W, GROUND_H);
+
+            // Wood grain texture - horizontal lines in varying browns
+            var grainColors = ['#78350f', '#a16207', '#854d0e', '#713f12', '#92400e', '#7c2d12'];
+            for (var g = 0; g < 10; g++) {
+                ctx.fillStyle = grainColors[g % grainColors.length];
+                ctx.globalAlpha = 0.25;
+                var yOff = (groundX * 0.1 + g * 17) % 5 - 2;
+                ctx.fillRect(0, GROUND_Y + 4 + g * 5 + yOff, W, 2);
+            }
+            ctx.globalAlpha = 1;
+
+            // Vertical grain lines (scroll with ground)
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            for (var nx = groundX % 35 - 35; nx < W; nx += 35) {
+                ctx.fillRect(nx, GROUND_Y + 3, 1, GROUND_H);
+            }
+
+            // Top edge highlight
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(0, GROUND_Y, W, 3);
+
+            // Bottom dark edge
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(0, H - 3, W, 3);
+
+            // Occasional knot patterns
+            ctx.fillStyle = 'rgba(120, 53, 15, 0.3)';
+            for (var k = groundX % 200 - 200; k < W; k += 200) {
+                ctx.beginPath();
+                ctx.ellipse(k + 100, GROUND_Y + 25, 8, 5, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawObstacles() {
+            for (var i = 0; i < obstacles.length; i++) {
+                var o = obstacles[i];
+                var fontSize = Math.max(o.w, o.h);
+                ctx.font = fontSize + 'px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(o.emoji, o.x + o.w / 2, o.y + o.h);
+
+                // Shadow beneath obstacle
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(o.x + o.w / 2, GROUND_Y + 2, o.w * 0.4, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawCarrots() {
+            for (var i = 0; i < carrots.length; i++) {
+                var c = carrots[i];
+                if (c.collected) continue;
+                c.bobPhase += 0.06;
+                var bobY = Math.sin(c.bobPhase) * 5;
+
+                // Glow
+                var grd = ctx.createRadialGradient(
+                    c.x + c.w / 2, c.y + c.h / 2 + bobY, 2,
+                    c.x + c.w / 2, c.y + c.h / 2 + bobY, 18
+                );
+                grd.addColorStop(0, 'rgba(251, 146, 60, 0.25)');
+                grd.addColorStop(1, 'rgba(251, 146, 60, 0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath();
+                ctx.arc(c.x + c.w / 2, c.y + c.h / 2 + bobY, 18, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = '22px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🥕', c.x + c.w / 2, c.y + c.h / 2 + bobY);
+            }
+        }
+
+        function drawScore() {
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+
+            // Distance
+            ctx.font = '700 10px Inter, sans-serif';
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+            ctx.fillText('METERS JULIENNED', W - 16, 12);
+
+            ctx.font = '800 28px Inter, sans-serif';
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillText(getDisplayDistance(), W - 14, 24);
+            ctx.fillStyle = 'white';
+            ctx.fillText(getDisplayDistance(), W - 16, 22);
+
+            // Bonus score
+            if (bonusScore > 0) {
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillStyle = '#fb923c';
+                ctx.fillText('🥕 ' + bonusScore, W - 16, 54);
+            }
+
+            // High score
+            if (highScore > 0) {
+                ctx.font = '600 10px Inter, sans-serif';
+                ctx.fillStyle = '#475569';
+                ctx.fillText('BEST: ' + highScore + 'm', W - 16, 70);
+            }
+
+            // Speed indicator
+            ctx.textAlign = 'left';
+            ctx.font = '600 10px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('SPEED', 16, 12);
+            // Speed bar
+            var barW = 60;
+            var barH = 6;
+            var fillPct = (gameSpeed - 4) / (MAX_SPEED - 4);
+            ctx.fillStyle = '#1e293b';
+            roundRect(ctx, 16, 26, barW, barH, 3);
+            ctx.fill();
+            var barColor = fillPct > 0.7 ? '#ef4444' : (fillPct > 0.4 ? '#fbbf24' : '#4ade80');
+            ctx.fillStyle = barColor;
+            roundRect(ctx, 16, 26, Math.max(4, barW * fillPct), barH, 3);
+            ctx.fill();
+
+            // Jump indicator
+            if (!lobster.onGround) {
+                ctx.font = '600 10px Inter, sans-serif';
+                ctx.fillStyle = lobster.jumpCount < MAX_JUMPS ? '#4ade80' : '#ef4444';
+                var jumpText = lobster.jumpCount < MAX_JUMPS ? 'JUMP READY' : 'NO JUMPS';
+                ctx.fillText(jumpText, 16, 40);
+            }
+        }
+
+        function drawParticles() {
+            for (var i = particles.length - 1; i >= 0; i--) {
+                var p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.type !== 'dust') p.vy += 0.15;
+                p.life--;
+                if (p.life <= 0) { particles.splice(i, 1); continue; }
+                var alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                if (p.type === 'dust') {
+                    var r = 2 + (1 - alpha) * 4;
+                    ctx.fillStyle = '#a16207';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (p.type === 'spark') {
+                    var r = 1.5 + (1 - alpha) * 2;
+                    ctx.fillStyle = globalFrame % 2 === 0 ? '#fbbf24' : '#4ade80';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (p.type === 'emoji') {
+                    ctx.font = p.size + 'px serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.emoji, p.x, p.y);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawToasts() {
+            for (var i = toasts.length - 1; i >= 0; i--) {
+                var t = toasts[i];
+                t.y -= 0.7;
+                t.life--;
+                if (t.life <= 0) { toasts.splice(i, 1); continue; }
+                ctx.globalAlpha = Math.min(1, t.life / 15);
+                ctx.font = '700 14px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = t.color;
+                ctx.fillText(t.msg, t.x, t.y);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawMenu() {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+            ctx.fillRect(0, 0, W, H);
+
+            // Draw lobster big in center
+            drawLobsterCharacter(W / 2 - 40, H / 2 - 70, 80, 70, 1);
+
+            ctx.textAlign = 'center';
+
+            ctx.font = '800 9px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('E N D L E S S   R U N N E R', W / 2, H / 2 - 5);
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '800 24px Inter, sans-serif';
+            ctx.fillText('Julienne Runner', W / 2, H / 2 + 24);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '500 12px Inter, sans-serif';
+            ctx.fillText('Run across the cutting board. Dodge the bad ingredients.', W / 2, H / 2 + 44);
+
+            ctx.font = '500 11px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('AVOID: 🍇 Raisins   🍍 Pineapple   🥛 Mayo', W / 2, H / 2 + 66);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('COLLECT: 🥕 Carrots (+5 pts)   ·   DOUBLE-JUMP available!', W / 2, H / 2 + 84);
+
+            var bounce = Math.sin(globalFrame * 0.06) * 4;
+            ctx.fillStyle = '#4ade80';
+            ctx.font = '600 14px Inter, sans-serif';
+            ctx.fillText('Space or Tap to start', W / 2, H / 2 + 115 + bounce);
+
+            if (highScore > 0) {
+                ctx.fillStyle = '#475569';
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.fillText('Best: ' + highScore + 'm julienned', W / 2, H / 2 + 138);
+            }
+        }
+
+        function drawDead() {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+            ctx.fillRect(0, 0, W, H);
+
+            var cw = 300, ch = 200;
+            var cx = (W - cw) / 2, cy = (H - ch) / 2 - 10;
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            roundRect(ctx, cx, cy, cw, ch, 16);
+            ctx.fill();
+            ctx.stroke();
+
+            // Red stripe
+            ctx.fillStyle = '#7f1d1d';
+            roundRect(ctx, cx, cy, cw, 6, [16, 16, 0, 0]);
+            ctx.fill();
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '800 22px Inter, sans-serif';
+            ctx.fillText('Julienned!', W / 2, cy + 38);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '500 11px Inter, sans-serif';
+            ctx.fillText('The cutting board claims another lobster', W / 2, cy + 56);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '700 10px Inter, sans-serif';
+            ctx.fillText('DISTANCE', W / 2, cy + 80);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '800 36px Inter, sans-serif';
+            ctx.fillText(getDisplayDistance() + 'm', W / 2, cy + 118);
+
+            if (bonusScore > 0) {
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillStyle = '#fb923c';
+                ctx.fillText('🥕 ' + bonusScore + ' bonus carrots', W / 2, cy + 138);
+            }
+
+            ctx.font = '600 13px Inter, sans-serif';
+            var totalScore = getDisplayDistance() + bonusScore;
+            var highTotal = highScore;
+            if (totalScore >= highTotal && totalScore > 0) {
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('New personal best!', W / 2, cy + 162);
+            } else {
+                ctx.fillStyle = '#475569';
+                ctx.fillText('Best: ' + highScore + 'm', W / 2, cy + 162);
+            }
+
+            if (frameCount > 30) {
+                var bounce = Math.sin(globalFrame * 0.06) * 3;
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '500 13px Inter, sans-serif';
+                ctx.fillText('Tap to retry', W / 2, cy + ch + 24 + bounce);
+            }
+        }
+
+        function roundRect(context, x, y, w, h, r) {
+            if (typeof r === 'number') r = [r, r, r, r];
+            context.beginPath();
+            context.moveTo(x + r[0], y);
+            context.lineTo(x + w - r[1], y);
+            context.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+            context.lineTo(x + w, y + h - r[2]);
+            context.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+            context.lineTo(x + r[3], y + h);
+            context.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+            context.lineTo(x, y + r[0]);
+            context.quadraticCurveTo(x, y, x + r[0], y);
+            context.closePath();
+        }
+
+        // ── Collision ──
+        function checkCollision() {
+            // Lobster hitbox (slightly smaller than visual)
+            var lx = lobster.x + 6;
+            var ly = lobster.y + 6;
+            var lw = lobster.w - 12;
+            var lh = lobster.h - 10;
+
+            for (var i = 0; i < obstacles.length; i++) {
+                var o = obstacles[i];
+                // Obstacle hitbox (slightly generous)
+                var ox = o.x + 3;
+                var oy = o.y + 3;
+                var ow = o.w - 6;
+                var oh = o.h - 4;
+                if (lx + lw > ox && lx < ox + ow && ly + lh > oy && ly < oy + oh) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkCarrotCollect() {
+            var lx = lobster.x + 4;
+            var ly = lobster.y + 4;
+            var lw = lobster.w - 8;
+            var lh = lobster.h - 8;
+
+            for (var i = 0; i < carrots.length; i++) {
+                var c = carrots[i];
+                if (c.collected) continue;
+                var bobY = Math.sin(c.bobPhase) * 5;
+                var cy = c.y + bobY;
+                if (lx + lw > c.x && lx < c.x + c.w && ly + lh > cy && ly < cy + c.h) {
+                    c.collected = true;
+                    bonusScore += 5;
+                    addToast('+5 🥕', c.x + c.w / 2, c.y - 10, '#fb923c');
+                    spawnCarrotCollectParticles(c.x + c.w / 2, c.y + c.h / 2);
+                }
+            }
+        }
+
+        // ── Update ──
+        function update() {
+            frameCount++;
+            globalFrame++;
+
+            if (state === STATE_PLAYING) {
+                // Gravity and position
+                lobster.vy += GRAVITY;
+                lobster.y += lobster.vy;
+
+                // Ground detection
+                if (lobster.y + lobster.h >= GROUND_Y) {
+                    lobster.y = GROUND_Y - lobster.h;
+                    lobster.vy = 0;
+                    lobster.jumpCount = 0;
+                    lobster.onGround = true;
+                } else {
+                    lobster.onGround = false;
+                }
+
+                // Running dust particles
+                if (lobster.onGround && globalFrame % 6 === 0) {
+                    particles.push({
+                        x: lobster.x + 5 + Math.random() * 10,
+                        y: GROUND_Y,
+                        vx: -1 - Math.random(),
+                        vy: -0.5 - Math.random() * 1.5,
+                        life: 10 + Math.random() * 6,
+                        maxLife: 16,
+                        type: 'dust'
+                    });
+                }
+
+                // Distance
+                distance += gameSpeed * 0.1;
+
+                // Speed increase (every 5 seconds at ~60fps = 300 frames)
+                speedTimer++;
+                if (speedTimer >= 300) {
+                    speedTimer = 0;
+                    if (gameSpeed < MAX_SPEED) {
+                        gameSpeed = Math.min(MAX_SPEED, gameSpeed + 0.1);
+                    }
+                }
+
+                // Scroll ground
+                groundX -= gameSpeed;
+
+                // Obstacle spawning
+                obstacleTimer++;
+                var spawnInterval = Math.max(35, OBSTACLE_MIN_INTERVAL - (gameSpeed - 4) * 3);
+                if (obstacleTimer >= spawnInterval) {
+                    obstacleTimer = 0;
+                    // Minimum gap between obstacles
+                    var canSpawn = true;
+                    for (var i = 0; i < obstacles.length; i++) {
+                        if (obstacles[i].x > W - 100) { canSpawn = false; break; }
+                    }
+                    if (canSpawn) spawnObstacle();
+                }
+
+                // Carrot spawning
+                carrotTimer++;
+                if (carrotTimer >= 120 + Math.random() * 80) {
+                    carrotTimer = 0;
+                    if (Math.random() < 0.5) spawnCarrot();
+                }
+
+                // Move obstacles
+                for (var i = obstacles.length - 1; i >= 0; i--) {
+                    obstacles[i].x -= gameSpeed;
+                    if (obstacles[i].x < -60) obstacles.splice(i, 1);
+                }
+
+                // Move carrots
+                for (var i = carrots.length - 1; i >= 0; i--) {
+                    carrots[i].x -= gameSpeed;
+                    if (carrots[i].x < -30) carrots.splice(i, 1);
+                }
+
+                // Collect carrots
+                checkCarrotCollect();
+
+                // Milestones
+                var d = getDisplayDistance();
+                for (var i = 0; i < milestones.length; i++) {
+                    var m = milestones[i];
+                    if (d >= m.at && !milestonesHit[m.at]) {
+                        milestonesHit[m.at] = true;
+                        addToast(m.msg, W / 2, H / 2 - 40, '#fbbf24');
+                    }
+                }
+
+                // Collision check
+                if (checkCollision()) {
+                    state = STATE_DEAD;
+                    frameCount = 0;
+                    var totalScore = getDisplayDistance();
+                    if (totalScore > highScore) {
+                        highScore = totalScore;
+                        localStorage.setItem('julienne-runner-high', highScore.toString());
+                    }
+                    spawnDeathParticles();
+                }
+
+            } else if (state === STATE_MENU) {
+                // Idle animation
+                lobster.y = GROUND_Y - lobster.h + Math.sin(globalFrame * 0.05) * 3;
+                groundX -= 1.5;
+            }
+        }
+
+        // ── Draw ──
+        function draw() {
+            // Clear
+            ctx.clearRect(0, 0, W, H);
+
+            drawBackground();
+            drawGround();
+            drawObstacles();
+            drawCarrots();
+
+            if (state !== STATE_DEAD || frameCount < 40) {
+                drawLobsterCharacter(lobster.x, lobster.y, lobster.w, lobster.h, 1);
+            }
+
+            drawParticles();
+            drawToasts();
+
+            if (state === STATE_PLAYING) drawScore();
+            else if (state === STATE_MENU) drawMenu();
+            else if (state === STATE_DEAD) drawDead();
+        }
+
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        gameLoop();
+    })();
+    </script>
+</body>
+</html>

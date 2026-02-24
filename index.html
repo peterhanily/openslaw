@@ -1370,7 +1370,7 @@
 
         .arcade-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.25rem;
         }
 
@@ -1525,9 +1525,7 @@
             }
 
             .arcade-grid {
-                grid-template-columns: 1fr;
-                max-width: 360px;
-                margin: 0 auto;
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .compliance-strip {
@@ -1540,6 +1538,10 @@
         }
 
         @media (max-width: 480px) {
+            .arcade-grid {
+                grid-template-columns: 1fr;
+            }
+
             .nav-inner {
                 height: 56px;
             }
@@ -1631,6 +1633,7 @@
                 <a href="#features">Why OpenSlaw</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
+                <a href="#arcade">Arcade</a>
                 <span class="badge">v1.0.0</span>
                 <button id="theme-toggle" class="theme-toggle">Night Slaw</button>
             </div>
@@ -2027,18 +2030,54 @@
                     <div class="arcade-desc">Pilot a cybernetic agentic lobster through legacy slaw pipelines. Dodge mayo, collect cabbage.</div>
                     <span class="arcade-badge playable">Play Now</span>
                 </a>
-                <div class="arcade-card coming-soon">
-                    <div class="arcade-icon">🥬</div>
-                    <div class="arcade-title">Cabbage Crusher</div>
-                    <div class="arcade-desc">Match-3 puzzle game. Shred combos to clear the board before the mayo pipeline backs up.</div>
-                    <span class="arcade-badge soon">Coming Soon</span>
-                </div>
-                <div class="arcade-card coming-soon">
+                <a href="/slaw-2048.html" class="arcade-card">
+                    <div class="arcade-icon">🔢</div>
+                    <div class="arcade-title">Slaw 2048</div>
+                    <div class="arcade-desc">Merge ingredients on a 4×4 grid. From cabbage to AGC — slide, combine, achieve coleslaw singularity.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/mayosweeper.html" class="arcade-card">
+                    <div class="arcade-icon">💣</div>
+                    <div class="arcade-title">Mayosweeper</div>
+                    <div class="arcade-desc">Clear the grid without stepping on a mayo jar. Flag the jars, secure the slaw pipeline.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/slaw-invaders.html" class="arcade-card">
+                    <div class="arcade-icon">👾</div>
+                    <div class="arcade-title">Slaw Invaders</div>
+                    <div class="arcade-desc">Defend your coleslaw from waves of raisins, pineapple, and legacy slaw. Boss battles included.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/slawdle.html" class="arcade-card">
+                    <div class="arcade-icon">📝</div>
+                    <div class="arcade-title">Slaw-dle</div>
+                    <div class="arcade-desc">Guess the daily 5-letter food word in 6 tries. Share your emoji grid with the team.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/snake-slaw.html" class="arcade-card">
+                    <div class="arcade-icon">🐍</div>
+                    <div class="arcade-title">Snake Slaw</div>
+                    <div class="arcade-desc">Guide your lobster through the kitchen. Collect cabbage, avoid mayo, don't bite your own tail.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/julienne-runner.html" class="arcade-card">
                     <div class="arcade-icon">🔪</div>
                     <div class="arcade-title">Julienne Runner</div>
-                    <div class="arcade-desc">Endless runner. Slice carrots at speed while dodging rogue raisins and pineapple chunks.</div>
-                    <span class="arcade-badge soon">Coming Soon</span>
-                </div>
+                    <div class="arcade-desc">Endless runner on a cutting board. Jump raisins, dodge mayo puddles, collect carrots at speed.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/coleslaw-clicker.html" class="arcade-card">
+                    <div class="arcade-icon">🥬</div>
+                    <div class="arcade-title">Coleslaw Clicker</div>
+                    <div class="arcade-desc">Click to shred. Buy upgrades. Automate your slaw pipeline from intern to AGC.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <a href="/memory-slaw.html" class="arcade-card">
+                    <div class="arcade-icon">🃏</div>
+                    <div class="arcade-title">Memory Slaw</div>
+                    <div class="arcade-desc">Flip cards and match ingredient pairs. Test your memory across three difficulty levels.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
             </div>
         </div>
     </section>
@@ -2147,6 +2186,7 @@
                 <a href="#features">Features</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
+                <a href="#arcade">Arcade</a>
                 <a href="/feed.xml">RSS</a>
                 <a href="https://openclaw.ai">OpenClaw.ai &#8599;</a>
             </div>

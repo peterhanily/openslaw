@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slaw Invaders — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        canvas { display: block; }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🦞 Slaw <span>Invaders</span></h1>
+        <p>Defend the coleslaw pipeline from legacy ingredients.</p>
+    </div>
+    <div class="game-container">
+        <canvas id="game" width="500" height="600"></canvas>
+    </div>
+    <div class="game-footer">
+        <a href="/">← Back to OpenSlaw.ai</a>
+        <div class="controls-hint">← → to move · Space to fire</div>
+    </div>
+
+    <script>
+    (function() {
+        var canvas = document.getElementById('game');
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width;
+        var H = canvas.height;
+
+        // ── State machine ──
+        var STATE_MENU = 0, STATE_PLAYING = 1, STATE_DEAD = 2;
+        var state = STATE_MENU;
+
+        // ── Scores ──
+        var score = 0;
+        var highScore = parseInt(localStorage.getItem('slaw-invaders-high') || '0');
+        var lives = 3;
+        var wave = 1;
+        var globalFrame = 0;
+        var frameCount = 0;
+        var deathFrameCount = 0;
+
+        // ── Toasts ──
+        var toasts = [];
+
+        // ── Invader config ──
+        var COLS = 8;
+        var ROWS = 5;
+        var INV_W = 36;
+        var INV_H = 30;
+        var INV_PAD_X = 10;
+        var INV_PAD_Y = 8;
+        var ROW_DATA = [
+            { emoji: '🍇', name: 'Raisins',      pts: 10 },
+            { emoji: '🍍', name: 'Pineapple',     pts: 20 },
+            { emoji: '🤍', name: 'Marshmallows',  pts: 30 },
+            { emoji: '🥛', name: 'Mayo',           pts: 40 },
+            { emoji: '🥗', name: 'Legacy Slaw',    pts: 50 }
+        ];
+
+        // ── Game objects ──
+        var invaders = [];
+        var playerBullets = [];
+        var enemyBullets = [];
+        var barriers = [];
+        var particles = [];
+        var boss = null;
+        var isBossWave = false;
+
+        // ── Player ──
+        var player = { x: W / 2 - 20, y: H - 50, w: 40, h: 30, speed: 4 };
+        var keys = { left: false, right: false, space: false };
+        var canShoot = true;
+        var shootCooldown = 0;
+        var SHOOT_DELAY = 15; // frames
+
+        // ── Invader movement ──
+        var invDir = 1; // 1 = right, -1 = left
+        var invSpeed = 0.5;
+        var invMoveTimer = 0;
+        var invMoveInterval = 40; // frames between moves
+        var invDropAmount = 14;
+        var waveStartY = 40;
+
+        // ── Enemy shoot ──
+        var enemyShootTimer = 0;
+        var enemyShootInterval = 90;
+
+        // ── Stars background ──
+        var stars = [];
+        for (var i = 0; i < 80; i++) {
+            stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                size: 0.5 + Math.random() * 1.5,
+                speed: 0.1 + Math.random() * 0.3,
+                opacity: 0.2 + Math.random() * 0.5
+            });
+        }
+
+        // ═══════════════════════════════
+        //   INIT FUNCTIONS
+        // ═══════════════════════════════
+
+        function initInvaders() {
+            invaders = [];
+            var gridW = COLS * (INV_W + INV_PAD_X) - INV_PAD_X;
+            var startX = (W - gridW) / 2;
+            for (var row = 0; row < ROWS; row++) {
+                for (var col = 0; col < COLS; col++) {
+                    invaders.push({
+                        x: startX + col * (INV_W + INV_PAD_X),
+                        y: waveStartY + row * (INV_H + INV_PAD_Y),
+                        w: INV_W,
+                        h: INV_H,
+                        row: row,
+                        col: col,
+                        alive: true,
+                        flashTimer: 0
+                    });
+                }
+            }
+            invDir = 1;
+            invSpeed = 0.5 + (wave - 1) * 0.1;
+            invMoveInterval = Math.max(10, 40 - (wave - 1) * 3);
+            invMoveTimer = 0;
+            enemyShootTimer = 0;
+            enemyShootInterval = Math.max(30, 90 - (wave - 1) * 8);
+        }
+
+        function initBarriers() {
+            barriers = [];
+            var barrierCount = 4;
+            var barrierW = 44;
+            var barrierH = 32;
+            var totalW = barrierCount * barrierW;
+            var spacing = (W - totalW) / (barrierCount + 1);
+            var segW = 4;
+            var segH = 4;
+
+            for (var b = 0; b < barrierCount; b++) {
+                var bx = spacing + b * (barrierW + spacing);
+                var by = H - 120;
+                // Create arch shape
+                var cols = Math.floor(barrierW / segW);
+                var rows = Math.floor(barrierH / segH);
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        // Skip segments to form arch
+                        var centerC = (cols - 1) / 2;
+                        var distFromCenter = Math.abs(c - centerC);
+                        // Top row corners rounded
+                        if (r === 0 && (c === 0 || c === cols - 1)) continue;
+                        // Bottom center gap (arch opening)
+                        if (r >= rows - 3 && distFromCenter < 2) continue;
+                        if (r >= rows - 2 && distFromCenter < 3) continue;
+
+                        barriers.push({
+                            x: bx + c * segW,
+                            y: by + r * segH,
+                            w: segW,
+                            h: segH,
+                            alive: true
+                        });
+                    }
+                }
+            }
+        }
+
+        function initBoss() {
+            boss = {
+                x: W / 2 - 40,
+                y: 40,
+                w: 80,
+                h: 50,
+                hp: 20,
+                maxHp: 20,
+                dir: 1,
+                speed: 1.5,
+                shootTimer: 0,
+                shootInterval: 40,
+                alive: true,
+                flashTimer: 0
+            };
+        }
+
+        function reset() {
+            score = 0;
+            lives = 3;
+            wave = 1;
+            waveStartY = 40;
+            playerBullets = [];
+            enemyBullets = [];
+            particles = [];
+            toasts = [];
+            canShoot = true;
+            shootCooldown = 0;
+            isBossWave = false;
+            boss = null;
+            player.x = W / 2 - player.w / 2;
+            initInvaders();
+            initBarriers();
+        }
+
+        function nextWave() {
+            wave++;
+            playerBullets = [];
+            enemyBullets = [];
+            player.x = W / 2 - player.w / 2;
+            canShoot = true;
+            shootCooldown = 0;
+
+            if (wave % 3 === 0) {
+                // Boss wave
+                isBossWave = true;
+                invaders = [];
+                initBoss();
+                addToast('BOSS WAVE!', W / 2, H / 2, '#ef4444');
+            } else {
+                isBossWave = false;
+                boss = null;
+                waveStartY = Math.min(40 + (wave - 1) * 8, 120);
+                initInvaders();
+                initBarriers();
+                addToast('Wave ' + wave, W / 2, H / 2, '#4ade80');
+            }
+        }
+
+        // ═══════════════════════════════
+        //   TOAST SYSTEM
+        // ═══════════════════════════════
+
+        function addToast(msg, x, y, color) {
+            toasts.push({ msg: msg, x: x, y: y, life: 60, color: color || '#4ade80' });
+        }
+
+        // ═══════════════════════════════
+        //   INPUT
+        // ═══════════════════════════════
+
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') { e.preventDefault(); keys.left = true; }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); keys.right = true; }
+            if (e.code === 'Space') {
+                e.preventDefault();
+                keys.space = true;
+                if (state === STATE_MENU) {
+                    state = STATE_PLAYING;
+                    reset();
+                } else if (state === STATE_DEAD && deathFrameCount > 40) {
+                    state = STATE_MENU;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', function(e) {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+            if (e.code === 'Space') keys.space = false;
+        });
+
+        // ═══════════════════════════════
+        //   SHOOTING
+        // ═══════════════════════════════
+
+        function playerShoot() {
+            if (!canShoot) return;
+            playerBullets.push({
+                x: player.x + player.w / 2 - 2,
+                y: player.y - 4,
+                w: 4,
+                h: 10,
+                speed: 6
+            });
+            canShoot = false;
+            shootCooldown = SHOOT_DELAY;
+        }
+
+        function enemyShoot() {
+            if (isBossWave && boss && boss.alive) {
+                // Boss shoots
+                enemyBullets.push({
+                    x: boss.x + boss.w / 2 - 3,
+                    y: boss.y + boss.h,
+                    w: 6,
+                    h: 12,
+                    speed: 3.5
+                });
+                // Boss shoots spread
+                enemyBullets.push({
+                    x: boss.x + boss.w / 4 - 3,
+                    y: boss.y + boss.h,
+                    w: 6,
+                    h: 12,
+                    speed: 3
+                });
+                enemyBullets.push({
+                    x: boss.x + boss.w * 3 / 4 - 3,
+                    y: boss.y + boss.h,
+                    w: 6,
+                    h: 12,
+                    speed: 3
+                });
+                return;
+            }
+
+            // Find bottom-most alive invaders per column
+            var bottomInvaders = [];
+            for (var col = 0; col < COLS; col++) {
+                for (var row = ROWS - 1; row >= 0; row--) {
+                    var idx = row * COLS + col;
+                    if (idx < invaders.length && invaders[idx].alive) {
+                        bottomInvaders.push(invaders[idx]);
+                        break;
+                    }
+                }
+            }
+            if (bottomInvaders.length === 0) return;
+
+            var shooter = bottomInvaders[Math.floor(Math.random() * bottomInvaders.length)];
+            enemyBullets.push({
+                x: shooter.x + shooter.w / 2 - 3,
+                y: shooter.y + shooter.h,
+                w: 6,
+                h: 12,
+                speed: 2.5 + wave * 0.15
+            });
+        }
+
+        // ═══════════════════════════════
+        //   PARTICLES
+        // ═══════════════════════════════
+
+        function spawnExplosion(x, y, emoji, count) {
+            for (var i = 0; i < (count || 8); i++) {
+                var angle = Math.random() * Math.PI * 2;
+                var speed = 1 + Math.random() * 3;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 20 + Math.random() * 20,
+                    maxLife: 40,
+                    emoji: emoji,
+                    size: 8 + Math.random() * 10,
+                    type: 'emoji'
+                });
+            }
+            // Spark particles
+            for (var i = 0; i < 6; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 10 + Math.random() * 10,
+                    maxLife: 20,
+                    type: 'spark'
+                });
+            }
+        }
+
+        function spawnPlayerExplosion() {
+            var cx = player.x + player.w / 2;
+            var cy = player.y + player.h / 2;
+            var emojis = ['💥', '⚡', '✨', '🔥', '🦞'];
+            for (var i = 0; i < 20; i++) {
+                var angle = Math.random() * Math.PI * 2;
+                var speed = 2 + Math.random() * 5;
+                particles.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 30 + Math.random() * 30,
+                    maxLife: 60,
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    size: 10 + Math.random() * 14,
+                    type: 'emoji'
+                });
+            }
+        }
+
+        // ═══════════════════════════════
+        //   COLLISION DETECTION
+        // ═══════════════════════════════
+
+        function rectsOverlap(a, b) {
+            return a.x < b.x + b.w && a.x + a.w > b.x &&
+                   a.y < b.y + b.h && a.y + a.h > b.y;
+        }
+
+        // ═══════════════════════════════
+        //   UPDATE
+        // ═══════════════════════════════
+
+        function update() {
+            globalFrame++;
+            frameCount++;
+
+            if (state !== STATE_PLAYING) return;
+
+            // ── Player movement ──
+            if (keys.left) player.x -= player.speed;
+            if (keys.right) player.x += player.speed;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.w > W) player.x = W - player.w;
+
+            // ── Shoot cooldown ──
+            if (!canShoot) {
+                shootCooldown--;
+                if (shootCooldown <= 0) canShoot = true;
+            }
+            if (keys.space && canShoot) playerShoot();
+
+            // ── Player bullets ──
+            for (var i = playerBullets.length - 1; i >= 0; i--) {
+                playerBullets[i].y -= playerBullets[i].speed;
+                if (playerBullets[i].y + playerBullets[i].h < 0) {
+                    playerBullets.splice(i, 1);
+                    continue;
+                }
+
+                var bullet = playerBullets[i];
+                var bulletHit = false;
+
+                // Check boss hit
+                if (isBossWave && boss && boss.alive) {
+                    if (rectsOverlap(bullet, boss)) {
+                        boss.hp--;
+                        boss.flashTimer = 5;
+                        playerBullets.splice(i, 1);
+                        bulletHit = true;
+                        if (boss.hp <= 0) {
+                            boss.alive = false;
+                            score += 500;
+                            spawnExplosion(boss.x + boss.w / 2, boss.y + boss.h / 2, '🥛', 15);
+                            addToast('+500 BOSS DESTROYED!', boss.x + boss.w / 2, boss.y, '#fbbf24');
+                            // Short delay then next wave
+                            setTimeout(function() {
+                                if (state === STATE_PLAYING) nextWave();
+                            }, 1500);
+                        }
+                        continue;
+                    }
+                }
+
+                if (bulletHit) continue;
+
+                // Check invader hits
+                for (var j = 0; j < invaders.length; j++) {
+                    if (!invaders[j].alive) continue;
+                    if (rectsOverlap(bullet, invaders[j])) {
+                        invaders[j].alive = false;
+                        var rowData = ROW_DATA[invaders[j].row];
+                        score += rowData.pts;
+                        spawnExplosion(
+                            invaders[j].x + invaders[j].w / 2,
+                            invaders[j].y + invaders[j].h / 2,
+                            rowData.emoji, 6
+                        );
+                        addToast('+' + rowData.pts, invaders[j].x + invaders[j].w / 2, invaders[j].y, '#4ade80');
+                        playerBullets.splice(i, 1);
+                        bulletHit = true;
+
+                        // Speed up remaining invaders
+                        var aliveCount = 0;
+                        for (var k = 0; k < invaders.length; k++) {
+                            if (invaders[k].alive) aliveCount++;
+                        }
+                        if (aliveCount > 0) {
+                            invMoveInterval = Math.max(2, Math.floor(40 * (aliveCount / (ROWS * COLS))) - (wave - 1) * 2);
+                        }
+
+                        // Check wave clear
+                        if (aliveCount === 0) {
+                            setTimeout(function() {
+                                if (state === STATE_PLAYING) nextWave();
+                            }, 1000);
+                        }
+                        break;
+                    }
+                }
+
+                if (bulletHit) continue;
+
+                // Check barrier hits
+                for (var j = barriers.length - 1; j >= 0; j--) {
+                    if (!barriers[j].alive) continue;
+                    if (rectsOverlap(bullet, barriers[j])) {
+                        barriers[j].alive = false;
+                        playerBullets.splice(i, 1);
+                        bulletHit = true;
+                        break;
+                    }
+                }
+            }
+
+            // ── Enemy bullets ──
+            for (var i = enemyBullets.length - 1; i >= 0; i--) {
+                enemyBullets[i].y += enemyBullets[i].speed;
+                if (enemyBullets[i].y > H) {
+                    enemyBullets.splice(i, 1);
+                    continue;
+                }
+
+                var eb = enemyBullets[i];
+
+                // Check player hit
+                if (rectsOverlap(eb, player)) {
+                    enemyBullets.splice(i, 1);
+                    loseLife();
+                    continue;
+                }
+
+                // Check barrier hits
+                var ebHit = false;
+                for (var j = barriers.length - 1; j >= 0; j--) {
+                    if (!barriers[j].alive) continue;
+                    if (rectsOverlap(eb, barriers[j])) {
+                        barriers[j].alive = false;
+                        enemyBullets.splice(i, 1);
+                        ebHit = true;
+                        break;
+                    }
+                }
+                if (ebHit) continue;
+            }
+
+            // ── Boss update ──
+            if (isBossWave && boss && boss.alive) {
+                boss.x += boss.speed * boss.dir;
+                if (boss.x + boss.w > W - 10) { boss.dir = -1; }
+                if (boss.x < 10) { boss.dir = 1; }
+                if (boss.flashTimer > 0) boss.flashTimer--;
+
+                boss.shootTimer++;
+                if (boss.shootTimer >= boss.shootInterval) {
+                    boss.shootTimer = 0;
+                    enemyShoot();
+                }
+            }
+
+            // ── Invader movement ──
+            if (!isBossWave) {
+                invMoveTimer++;
+                if (invMoveTimer >= invMoveInterval) {
+                    invMoveTimer = 0;
+
+                    // Check if any alive invader is at the edge
+                    var needDrop = false;
+                    for (var i = 0; i < invaders.length; i++) {
+                        if (!invaders[i].alive) continue;
+                        if (invDir === 1 && invaders[i].x + invaders[i].w + invSpeed * 10 > W - 5) needDrop = true;
+                        if (invDir === -1 && invaders[i].x - invSpeed * 10 < 5) needDrop = true;
+                    }
+
+                    if (needDrop) {
+                        invDir *= -1;
+                        for (var i = 0; i < invaders.length; i++) {
+                            if (invaders[i].alive) invaders[i].y += invDropAmount;
+                        }
+                    } else {
+                        for (var i = 0; i < invaders.length; i++) {
+                            if (invaders[i].alive) invaders[i].x += invDir * (invSpeed * 10);
+                        }
+                    }
+
+                    // Check if invaders reached player
+                    for (var i = 0; i < invaders.length; i++) {
+                        if (invaders[i].alive && invaders[i].y + invaders[i].h >= player.y - 10) {
+                            gameOver();
+                            return;
+                        }
+                    }
+                }
+
+                // Enemy shooting
+                enemyShootTimer++;
+                if (enemyShootTimer >= enemyShootInterval) {
+                    enemyShootTimer = 0;
+                    enemyShoot();
+                }
+            }
+
+            // ── Particles ──
+            for (var i = particles.length - 1; i >= 0; i--) {
+                var p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.type === 'emoji') p.vy += 0.05;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // ── Toasts ──
+            for (var i = toasts.length - 1; i >= 0; i--) {
+                toasts[i].y -= 0.8;
+                toasts[i].life--;
+                if (toasts[i].life <= 0) toasts.splice(i, 1);
+            }
+
+            // ── Update high score ──
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('slaw-invaders-high', highScore.toString());
+            }
+        }
+
+        function loseLife() {
+            lives--;
+            spawnPlayerExplosion();
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                addToast('Lobster down!', player.x + player.w / 2, player.y - 20, '#ef4444');
+                player.x = W / 2 - player.w / 2;
+                playerBullets = [];
+                enemyBullets = [];
+            }
+        }
+
+        function gameOver() {
+            state = STATE_DEAD;
+            deathFrameCount = 0;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('slaw-invaders-high', highScore.toString());
+            }
+            spawnPlayerExplosion();
+        }
+
+        // ═══════════════════════════════
+        //   DRAWING
+        // ═══════════════════════════════
+
+        function drawBackground() {
+            var grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, '#0c1222');
+            grad.addColorStop(0.5, '#0f172a');
+            grad.addColorStop(1, '#162032');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Stars
+            for (var i = 0; i < stars.length; i++) {
+                var s = stars[i];
+                s.y += s.speed;
+                if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+                var twinkle = 0.5 + Math.sin(globalFrame * 0.03 + i) * 0.3;
+                ctx.globalAlpha = s.opacity * twinkle;
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Subtle grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.015)';
+            ctx.lineWidth = 1;
+            for (var gy = 0; gy < H; gy += 40) {
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+            }
+            for (var gx = 0; gx < W; gx += 40) {
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+            }
+        }
+
+        function drawPlayer() {
+            // Glow underneath
+            var grd = ctx.createRadialGradient(
+                player.x + player.w / 2, player.y + player.h / 2, 2,
+                player.x + player.w / 2, player.y + player.h / 2, 30
+            );
+            grd.addColorStop(0, 'rgba(74, 222, 128, 0.15)');
+            grd.addColorStop(1, 'rgba(74, 222, 128, 0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(player.x + player.w / 2, player.y + player.h / 2, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = '30px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🦞', player.x + player.w / 2, player.y + player.h / 2);
+        }
+
+        function drawInvaders() {
+            for (var i = 0; i < invaders.length; i++) {
+                var inv = invaders[i];
+                if (!inv.alive) continue;
+
+                var rowData = ROW_DATA[inv.row];
+                // Wobble animation
+                var wobble = Math.sin(globalFrame * 0.04 + inv.col * 0.5) * 2;
+
+                ctx.font = '22px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(rowData.emoji, inv.x + inv.w / 2, inv.y + inv.h / 2 + wobble);
+            }
+        }
+
+        function drawBoss() {
+            if (!boss || !boss.alive) return;
+
+            // Flash on hit
+            if (boss.flashTimer > 0 && boss.flashTimer % 2 === 0) return;
+
+            // Boss glow
+            var grd = ctx.createRadialGradient(
+                boss.x + boss.w / 2, boss.y + boss.h / 2, 5,
+                boss.x + boss.w / 2, boss.y + boss.h / 2, 60
+            );
+            grd.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
+            grd.addColorStop(1, 'rgba(239, 68, 68, 0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(boss.x + boss.w / 2, boss.y + boss.h / 2, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw mayo jar body
+            ctx.fillStyle = '#fefce8';
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 2;
+            roundRect(ctx, boss.x + 10, boss.y + 12, boss.w - 20, boss.h - 12, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Jar lid
+            ctx.fillStyle = '#dc2626';
+            roundRect(ctx, boss.x + 6, boss.y + 4, boss.w - 12, 14, [4, 4, 0, 0]);
+            ctx.fill();
+
+            // Label
+            ctx.font = '800 9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#dc2626';
+            ctx.fillText('MEGA', boss.x + boss.w / 2, boss.y + 30);
+            ctx.fillText('MAYO', boss.x + boss.w / 2, boss.y + 42);
+
+            // HP bar background
+            var hpBarW = 70;
+            var hpBarH = 6;
+            var hpBarX = boss.x + boss.w / 2 - hpBarW / 2;
+            var hpBarY = boss.y - 12;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(hpBarX, hpBarY, hpBarW, hpBarH);
+            // HP bar fill
+            var hpRatio = boss.hp / boss.maxHp;
+            var hpColor = hpRatio > 0.5 ? '#4ade80' : hpRatio > 0.25 ? '#fbbf24' : '#ef4444';
+            ctx.fillStyle = hpColor;
+            ctx.fillRect(hpBarX, hpBarY, hpBarW * hpRatio, hpBarH);
+            // HP bar border
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(hpBarX, hpBarY, hpBarW, hpBarH);
+        }
+
+        function drawBarriers() {
+            ctx.fillStyle = '#92400e';
+            for (var i = 0; i < barriers.length; i++) {
+                if (!barriers[i].alive) continue;
+                ctx.fillRect(barriers[i].x, barriers[i].y, barriers[i].w, barriers[i].h);
+            }
+            // Highlight edge
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            for (var i = 0; i < barriers.length; i++) {
+                if (!barriers[i].alive) continue;
+                ctx.fillRect(barriers[i].x, barriers[i].y, barriers[i].w, 1);
+            }
+        }
+
+        function drawPlayerBullets() {
+            for (var i = 0; i < playerBullets.length; i++) {
+                var b = playerBullets[i];
+                // Glow
+                ctx.shadowColor = '#4ade80';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#4ade80';
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.shadowBlur = 0;
+                // Bright core
+                ctx.fillStyle = '#bbf7d0';
+                ctx.fillRect(b.x + 1, b.y, 2, b.h);
+            }
+        }
+
+        function drawEnemyBullets() {
+            for (var i = 0; i < enemyBullets.length; i++) {
+                var b = enemyBullets[i];
+                // Glow
+                ctx.shadowColor = '#ef4444';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#ef4444';
+                // Draw as mayo drop shape
+                ctx.beginPath();
+                ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, b.h / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                // Bright core
+                ctx.fillStyle = '#fca5a5';
+                ctx.beginPath();
+                ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, 1.5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawHUD() {
+            // Score top-left
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.font = '600 10px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('SCORE', 14, 12);
+            ctx.font = '800 22px Inter, sans-serif';
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText(score, 14, 24);
+
+            // High score top-right
+            ctx.textAlign = 'right';
+            ctx.font = '600 10px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('HIGH SCORE', W - 14, 12);
+            ctx.font = '800 22px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(highScore, W - 14, 24);
+
+            // Wave counter center-top
+            ctx.textAlign = 'center';
+            ctx.font = '600 10px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('WAVE', W / 2, 12);
+            ctx.font = '700 18px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(wave, W / 2, 24);
+
+            // Lives bottom-left
+            ctx.textAlign = 'left';
+            ctx.font = '18px serif';
+            for (var i = 0; i < lives; i++) {
+                ctx.fillText('🦞', 14 + i * 28, H - 18);
+            }
+        }
+
+        function drawParticles() {
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                var alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                if (p.type === 'emoji') {
+                    ctx.font = p.size + 'px serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p.emoji, p.x, p.y);
+                } else if (p.type === 'spark') {
+                    var sparkColor = globalFrame % 2 === 0 ? '#fbbf24' : '#4ade80';
+                    ctx.fillStyle = sparkColor;
+                    var r = 1 + (1 - alpha) * 3;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawToasts() {
+            for (var i = 0; i < toasts.length; i++) {
+                var t = toasts[i];
+                ctx.globalAlpha = Math.min(1, t.life / 15);
+                ctx.font = '700 16px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = t.color;
+                ctx.fillText(t.msg, t.x, t.y);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawMenu() {
+            drawBackground();
+
+            ctx.fillStyle = 'rgba(12, 18, 34, 0.4)';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Title
+            ctx.font = '800 10px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('D E F E N D   T H E   P I P E L I N E', W / 2, 130);
+
+            ctx.font = '800 34px Inter, sans-serif';
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText('Slaw Invaders', W / 2, 165);
+
+            ctx.font = '400 13px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Eliminate legacy slaw ingredients', W / 2, 195);
+
+            // Invader types with points
+            var typeStartY = 240;
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('— THREAT MANIFEST —', W / 2, typeStartY);
+
+            for (var i = 0; i < ROW_DATA.length; i++) {
+                var rd = ROW_DATA[i];
+                var ty = typeStartY + 28 + i * 26;
+                ctx.font = '20px serif';
+                ctx.fillText(rd.emoji, W / 2 - 80, ty);
+                ctx.font = '600 13px Inter, sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.textAlign = 'left';
+                ctx.fillText(rd.name, W / 2 - 55, ty);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText(rd.pts + ' pts', W / 2 + 100, ty);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#64748b';
+            }
+
+            // Boss info
+            var bossY = typeStartY + 28 + ROW_DATA.length * 26 + 12;
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('BOSS: Mega Mayo Jar — 500 pts (every 3 waves)', W / 2, bossY);
+
+            // Deploy prompt
+            var bounce = Math.sin(globalFrame * 0.06) * 4;
+            ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('Press Space to Deploy', W / 2, bossY + 60 + bounce);
+
+            // Controls
+            ctx.font = '400 11px Inter, sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText('← → to move  ·  Space to fire', W / 2, bossY + 88);
+
+            // High score
+            if (highScore > 0) {
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillStyle = '#475569';
+                ctx.fillText('High Score: ' + highScore, W / 2, bossY + 115);
+            }
+        }
+
+        function drawDeathScreen() {
+            ctx.fillStyle = 'rgba(12, 18, 34, 0.7)';
+            ctx.fillRect(0, 0, W, H);
+
+            // Card
+            var cw = 300, ch = 260;
+            var cx = (W - cw) / 2, cy = (H - ch) / 2 - 10;
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            roundRect(ctx, cx, cy, cw, ch, 16);
+            ctx.fill();
+            ctx.stroke();
+
+            // Red stripe
+            ctx.fillStyle = '#7f1d1d';
+            roundRect(ctx, cx, cy, cw, 6, [16, 16, 0, 0]);
+            ctx.fill();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '800 24px Inter, sans-serif';
+            ctx.fillText('SLAW OVERRUN', W / 2, cy + 40);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '400 12px Inter, sans-serif';
+            ctx.fillText('The legacy ingredients have won... for now', W / 2, cy + 65);
+
+            // Score
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '700 10px Inter, sans-serif';
+            ctx.fillText('FINAL SCORE', W / 2, cy + 100);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '800 44px Inter, sans-serif';
+            ctx.fillText(score, W / 2, cy + 138);
+
+            // Wave reached
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 12px Inter, sans-serif';
+            ctx.fillText('Wave reached: ' + wave, W / 2, cy + 170);
+
+            // High score
+            ctx.font = '600 14px Inter, sans-serif';
+            if (score >= highScore && score > 0) {
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('New High Score!', W / 2, cy + 200);
+            } else {
+                ctx.fillStyle = '#475569';
+                ctx.fillText('High Score: ' + highScore, W / 2, cy + 200);
+            }
+
+            // Restart prompt
+            if (deathFrameCount > 40) {
+                var bounce = Math.sin(globalFrame * 0.06) * 3;
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '500 14px Inter, sans-serif';
+                ctx.fillText('Press Space to continue', W / 2, cy + ch + 30 + bounce);
+            }
+        }
+
+        function roundRect(context, x, y, w, h, r) {
+            if (typeof r === 'number') r = [r, r, r, r];
+            context.beginPath();
+            context.moveTo(x + r[0], y);
+            context.lineTo(x + w - r[1], y);
+            context.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+            context.lineTo(x + w, y + h - r[2]);
+            context.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+            context.lineTo(x + r[3], y + h);
+            context.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+            context.lineTo(x, y + r[0]);
+            context.quadraticCurveTo(x, y, x + r[0], y);
+            context.closePath();
+        }
+
+        // ═══════════════════════════════
+        //   MAIN DRAW
+        // ═══════════════════════════════
+
+        function draw() {
+            if (state === STATE_MENU) {
+                drawMenu();
+                return;
+            }
+
+            drawBackground();
+
+            if (state === STATE_PLAYING) {
+                drawBarriers();
+                drawInvaders();
+                drawBoss();
+                drawPlayerBullets();
+                drawEnemyBullets();
+                drawPlayer();
+                drawHUD();
+                drawParticles();
+                drawToasts();
+            } else if (state === STATE_DEAD) {
+                deathFrameCount++;
+                drawBarriers();
+                drawInvaders();
+                drawBoss();
+                drawEnemyBullets();
+                drawParticles();
+                drawToasts();
+                drawDeathScreen();
+            }
+        }
+
+        // ═══════════════════════════════
+        //   GAME LOOP
+        // ═══════════════════════════════
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    })();
+    </script>
+</body>
+</html>
