@@ -1361,53 +1361,89 @@
             font-style: italic;
         }
 
-        /* ── Game Callout ── */
-        .game-callout {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
+        /* ── Arcade ── */
+        .arcade-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
         }
 
-        .game-callout-card {
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem 1.5rem;
+        .arcade-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .arcade-card {
             background: var(--card-bg);
             border: 1px solid var(--gray-200);
             border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
             text-decoration: none;
             color: var(--gray-800);
             transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .game-callout-card:hover {
+        a.arcade-card:hover {
             border-color: var(--green-300);
             transform: translateY(-2px);
             box-shadow: 0 4px 16px rgba(22, 163, 74, 0.1);
         }
 
-        .game-callout-icon {
-            font-size: 1.75rem;
-            flex-shrink: 0;
+        .arcade-card.coming-soon {
+            opacity: 0.55;
+            cursor: default;
         }
 
-        .game-callout-text {
-            text-align: left;
+        .arcade-card.coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--gray-200);
         }
 
-        .game-callout-title {
-            font-size: 0.9rem;
+        .arcade-icon {
+            font-size: 2.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .arcade-title {
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--gray-800);
-            margin-bottom: 0.15rem;
+            margin-bottom: 0.25rem;
         }
 
-        .game-callout-desc {
-            font-size: 0.78rem;
+        .arcade-desc {
+            font-size: 0.82rem;
+            color: var(--gray-500);
+            line-height: 1.45;
+            margin-bottom: 0.75rem;
+        }
+
+        .arcade-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            margin-top: auto;
+        }
+
+        .arcade-badge.playable {
+            background: var(--green-50);
+            color: var(--green-700);
+            border: 1px solid var(--green-200);
+        }
+
+        .arcade-badge.soon {
+            background: var(--gray-100);
             color: var(--gray-400);
-            line-height: 1.4;
+            border: 1px solid var(--gray-200);
         }
 
         /* ── Built With ── */
@@ -1488,6 +1524,12 @@
                 grid-template-columns: 1fr;
             }
 
+            .arcade-grid {
+                grid-template-columns: 1fr;
+                max-width: 360px;
+                margin: 0 auto;
+            }
+
             .compliance-strip {
                 gap: 0.75rem;
             }
@@ -1540,7 +1582,7 @@
             .theme-toggle, .scaler-controls, .recipe-actions,
             .pricing-section, .benchmarks-section,
             .testimonials-section, .roadmap-section,
-            .hiring-section, .compliance-strip, .quickstart, .game-callout,
+            .hiring-section, .compliance-strip, .quickstart, .arcade-section,
             .faq-section, .toast, .hero-badge, footer {
                 display: none !important;
             }
@@ -1971,17 +2013,35 @@
         </div>
     </section>
 
-    <!-- Game Callout -->
-    <div class="game-callout">
-        <a href="/flappy-lobster.html" class="game-callout-card">
-            <span class="game-callout-icon">🦞</span>
-            <div class="game-callout-text">
-                <div class="game-callout-title">Flappy Lobster: Slaw Avoidance Simulator</div>
-                <div class="game-callout-desc">Help our agentic cybernetic lobster dodge legacy slaw pipelines. A break-time essential.</div>
+    <!-- Arcade -->
+    <section class="arcade-section" id="arcade">
+        <div class="section">
+            <div class="section-label">Arcade</div>
+            <h2 class="section-title">Slaw Labs</h2>
+            <p class="section-subtitle">Break-time diversions from the OpenSlaw R&D department. All games are open-source and mayo-free.</p>
+
+            <div class="arcade-grid">
+                <a href="/flappy-lobster.html" class="arcade-card">
+                    <div class="arcade-icon">🦞</div>
+                    <div class="arcade-title">Flappy Lobster</div>
+                    <div class="arcade-desc">Pilot a cybernetic agentic lobster through legacy slaw pipelines. Dodge mayo, collect cabbage.</div>
+                    <span class="arcade-badge playable">Play Now</span>
+                </a>
+                <div class="arcade-card coming-soon">
+                    <div class="arcade-icon">🥬</div>
+                    <div class="arcade-title">Cabbage Crusher</div>
+                    <div class="arcade-desc">Match-3 puzzle game. Shred combos to clear the board before the mayo pipeline backs up.</div>
+                    <span class="arcade-badge soon">Coming Soon</span>
+                </div>
+                <div class="arcade-card coming-soon">
+                    <div class="arcade-icon">🔪</div>
+                    <div class="arcade-title">Julienne Runner</div>
+                    <div class="arcade-desc">Endless runner. Slice carrots at speed while dodging rogue raisins and pineapple chunks.</div>
+                    <span class="arcade-badge soon">Coming Soon</span>
+                </div>
             </div>
-            <span class="game-callout-icon" style="font-size: 1rem; color: var(--gray-300);">&#8250;</span>
-        </a>
-    </div>
+        </div>
+    </section>
 
     <!-- FAQ -->
     <section class="section faq-section" id="faq">
