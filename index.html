@@ -142,6 +142,11 @@
             color: #cbd5e1 !important;
         }
 
+        html[data-theme="dark"] .toast {
+            background: #334155;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -812,6 +817,10 @@
             gap: 1.5rem;
         }
 
+        .testimonials-grid .testimonial-card:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+
         .testimonial-card {
             background: var(--card-bg);
             border: 1px solid var(--gray-200);
@@ -1165,6 +1174,7 @@
             transform: translateX(-50%) translateY(100px);
             background: #111827;
             color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             font-size: 0.9rem;
@@ -1546,6 +1556,10 @@
                 height: 56px;
             }
 
+            .redirect-banner {
+                margin-top: 56px;
+            }
+
             .hero-actions {
                 flex-direction: column;
                 align-items: center;
@@ -1655,7 +1669,7 @@
             <a href="https://github.com/peterhanily/openslaw" class="btn btn-secondary">Star on GitHub</a>
         </div>
         <div class="hero-image">
-            <img src="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&q=80" alt="A plate of lobsters with lemons and fresh herbs" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1707995546402-5057206e5161?auto=format&fit=crop&w=1200&q=80" alt="A plate of lobsters with lemons and fresh herbs">
             <div class="photo-credit">Photo by <a href="https://unsplash.com/@fotoinshadows">Monika Borys</a> on <a href="https://unsplash.com">Unsplash</a></div>
         </div>
     </section>
@@ -2120,7 +2134,7 @@
 
         <div class="faq-list">
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     Is this really AI?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2129,7 +2143,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     Can I use this commercially?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2138,7 +2152,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     What model powers OpenSlaw?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2147,7 +2161,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     Why not mayo?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2156,7 +2170,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     Can I use this offline?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2165,7 +2179,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     How do I contribute?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2174,7 +2188,7 @@
                 </div>
             </div>
             <div class="faq-item">
-                <button class="faq-question">
+                <button class="faq-question" aria-expanded="false">
                     Is this affiliated with OpenClaw?
                     <span class="faq-icon">+</span>
                 </button>
@@ -2358,11 +2372,13 @@
                 document.querySelectorAll('.faq-item.open').forEach(function(openItem) {
                     openItem.classList.remove('open');
                     openItem.querySelector('.faq-answer').style.maxHeight = null;
+                    openItem.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
                 });
 
                 if (!isOpen) {
                     item.classList.add('open');
                     answer.style.maxHeight = answer.scrollHeight + 'px';
+                    btn.setAttribute('aria-expanded', 'true');
                 }
             });
         });
