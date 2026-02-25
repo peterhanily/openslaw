@@ -49,7 +49,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 400px;
+            max-width: 400px;
+            width: 100%;
             margin-bottom: 0.5rem;
             padding: 0 0.25rem;
         }
@@ -78,7 +79,7 @@
             box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        canvas { display: block; }
+        canvas { display: block; max-width: 100%; height: auto; }
 
         .game-footer {
             text-align: center;
@@ -384,10 +385,13 @@
         });
 
         // Touch swipe
+        var touchHandledDeath = false;
         canvas.addEventListener('touchstart', function(e) {
             e.preventDefault();
+            touchHandledDeath = false;
             if (state === STATE_DEAD && deathFrameCount > 30) {
                 state = STATE_MENU;
+                touchHandledDeath = true;
                 return;
             }
             var touch = e.touches[0];
@@ -401,7 +405,7 @@
 
         canvas.addEventListener('touchend', function(e) {
             e.preventDefault();
-            if (state === STATE_DEAD) return;
+            if (state === STATE_DEAD || touchHandledDeath) return;
 
             var touch = e.changedTouches[0];
             var dx = touch.clientX - touchStartX;
