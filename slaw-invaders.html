@@ -172,11 +172,11 @@
         var INV_PAD_X = 10;
         var INV_PAD_Y = 8;
         var ROW_DATA = [
-            { emoji: '🍇', name: 'Raisins',      pts: 10 },
-            { emoji: '🍍', name: 'Pineapple',     pts: 20 },
-            { emoji: '🤍', name: 'Marshmallows',  pts: 30 },
-            { emoji: '🥛', name: 'Mayo',           pts: 40 },
-            { emoji: '🥗', name: 'Legacy Slaw',    pts: 50 }
+            { emoji: '🍇', name: 'Raisins',      pts: 10, quips: ['Shredded!', 'De-raisined!', 'Back to the trail mix!', 'No raisins allowed!'] },
+            { emoji: '🍍', name: 'Pineapple',     pts: 20, quips: ['Juiced!', 'Pineapple does NOT belong!', 'Tropical threat neutralized!', 'Hawaiian pizza called.'] },
+            { emoji: '🤍', name: 'Marshmallows',  pts: 30, quips: ['Melted!', 'Fluffed out!', 'Back to the campfire!', 'Not in MY slaw!'] },
+            { emoji: '🥛', name: 'Mayo',           pts: 40, quips: ['Mayo contained!', 'Back to the jar!', 'Emulsion terminated!', 'You\'ve been vinaigrette\'d!'] },
+            { emoji: '🥗', name: 'Legacy Slaw',    pts: 50, quips: ['Deprecated!', 'Legacy code deleted!', 'You\'ve been julienned!', 'Migrated to OpenSlaw!'] }
         ];
 
         // ── Game objects ──
@@ -581,7 +581,8 @@
                             invaders[j].y + invaders[j].h / 2,
                             rowData.emoji, 6
                         );
-                        addToast('+' + rowData.pts, invaders[j].x + invaders[j].w / 2, invaders[j].y, '#4ade80');
+                        var quip = rowData.quips[Math.floor(Math.random() * rowData.quips.length)];
+                        addToast('+' + rowData.pts + ' ' + quip, invaders[j].x + invaders[j].w / 2, invaders[j].y, '#4ade80');
                         playerBullets.splice(i, 1);
                         bulletHit = true;
 

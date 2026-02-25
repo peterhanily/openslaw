@@ -1566,6 +1566,217 @@
             box-shadow: 0 4px 16px rgba(22, 163, 74, 0.5);
         }
 
+        /* ── Investor Strip ── */
+        .investor-strip {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .investor-strip-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.25rem;
+        }
+
+        .investor-logos {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .investor-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--gray-400);
+            white-space: nowrap;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .investor-name:hover {
+            opacity: 1;
+        }
+
+        /* ── Integrations ── */
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .integration-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .integration-card:hover {
+            border-color: var(--green-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.08);
+        }
+
+        .integration-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .integration-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.2rem;
+        }
+
+        .integration-desc {
+            font-size: 0.82rem;
+            color: var(--gray-500);
+            line-height: 1.45;
+        }
+
+        /* ── Responsible Slaw ── */
+        .safety-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .safety-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .safety-card:hover {
+            border-color: var(--green-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.08);
+        }
+
+        .safety-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .safety-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.35rem;
+        }
+
+        .safety-card p {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        /* ── Newsletter ── */
+        .newsletter-section {
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 480px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-300);
+            background: var(--card-bg);
+            color: var(--gray-800);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .newsletter-input:focus {
+            border-color: var(--green-400);
+        }
+
+        .newsletter-input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .newsletter-fine-print {
+            font-size: 0.72rem;
+            color: var(--gray-400);
+            text-align: center;
+            margin-top: 0.75rem;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── Contributors ── */
+        .contributors-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .contributor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .contributor-avatar {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: var(--green-100);
+            border: 2px solid var(--green-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--green-700);
+        }
+
+        .contributor-name {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .contributors-stats {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .contributors-stats strong {
+            color: var(--green-600);
+        }
+
         /* ── Built With ── */
         .built-with {
             margin-top: 1rem;
@@ -1640,6 +1851,18 @@
                 grid-template-columns: 1fr;
             }
 
+            .integrations-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .safety-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .investor-logos {
+                gap: 1.5rem;
+            }
+
             .hiring-grid {
                 grid-template-columns: 1fr;
             }
@@ -1677,6 +1900,10 @@
 
         @media (max-width: 480px) {
             .arcade-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .integrations-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1727,7 +1954,8 @@
             .pricing-section, .benchmarks-section,
             .testimonials-section, .roadmap-section,
             .hiring-section, .compliance-strip, .quickstart, .arcade-section,
-            .faq-section, .toast, .hero-badge, footer {
+            .faq-section, .newsletter-section, .investor-strip,
+            .toast, .hero-badge, footer {
                 display: none !important;
             }
 
@@ -1776,7 +2004,8 @@
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
                 <a href="#arcade">Arcade</a>
-                <span class="badge">v1.0.0</span>
+                <a href="/docs.html">Docs</a>
+                <span class="badge">v1.3.0</span>
                 <button id="theme-toggle" class="theme-toggle">Night Slaw</button>
             </div>
         </div>
@@ -1823,6 +2052,19 @@
         <div class="stat">
             <div class="stat-value">0</div>
             <div class="stat-label">Hallucinations</div>
+        </div>
+    </div>
+
+    <!-- Investors -->
+    <div class="investor-strip">
+        <div class="investor-strip-label">Backed By</div>
+        <div class="investor-logos">
+            <span class="investor-name">Andreessen Coleslaw</span>
+            <span class="investor-name">Sequoia Cabbage</span>
+            <span class="investor-name">Y Combinator (the vegetable kind)</span>
+            <span class="investor-name">Slaw Capital</span>
+            <span class="investor-name">First Round (of Shredding)</span>
+            <span class="investor-name">Accel-erated Fermentation</span>
         </div>
     </div>
 
@@ -1942,6 +2184,46 @@
         </div>
     </section>
 
+    <!-- Integrations -->
+    <section class="section" id="integrations">
+        <div class="section-label">Integrations</div>
+        <h2 class="section-title">Works With Your Existing Salad Stack</h2>
+        <p class="section-subtitle">OpenSlaw plugs into the tools your team already uses. No migration required.</p>
+
+        <div class="integrations-grid">
+            <div class="integration-card">
+                <div class="integration-icon">💬</div>
+                <div class="integration-name">SlawBot for Slack</div>
+                <div class="integration-desc">Real-time slaw alerts. Get notified when crunch factor drops below threshold.</div>
+            </div>
+            <div class="integration-card">
+                <div class="integration-icon">🐙</div>
+                <div class="integration-name">GitHub Auto-Shred</div>
+                <div class="integration-desc">Automatically shred cabbage on every push. CI/CD for your coleslaw pipeline.</div>
+            </div>
+            <div class="integration-card">
+                <div class="integration-icon">☁️</div>
+                <div class="integration-name">AWS S3law Storage</div>
+                <div class="integration-desc">Store unlimited slaw configurations in the cloud. 99.999999999% durability.</div>
+            </div>
+            <div class="integration-card">
+                <div class="integration-icon">⚙️</div>
+                <div class="integration-name">K8Slaw (Kubernetes)</div>
+                <div class="integration-desc">Orchestrate slaw containers at scale. Auto-scaling shred pods included.</div>
+            </div>
+            <div class="integration-card">
+                <div class="integration-icon">📊</div>
+                <div class="integration-name">Datadog Mayo Monitoring</div>
+                <div class="integration-desc">Track mayo contamination metrics in real-time. Custom dashboards for crunch SLAs.</div>
+            </div>
+            <div class="integration-card">
+                <div class="integration-icon">⚡</div>
+                <div class="integration-name">Zapier Auto-Fermentation</div>
+                <div class="integration-desc">Trigger fermentation workflows from any event. "When Jira ticket closes, shred cabbage."</div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing -->
     <section class="pricing-section" id="pricing">
         <div class="section">
@@ -2038,6 +2320,36 @@
         </div>
     </section>
 
+    <!-- Responsible Slaw -->
+    <section class="section" id="safety">
+        <div class="section-label">Responsible Slaw</div>
+        <h2 class="section-title">Our Commitment to Slaw Safety</h2>
+        <p class="section-subtitle">We ensure no cabbage is harmed without informed consent. Our mayo detection model has been red-teamed by 200+ condiment experts.</p>
+
+        <div class="safety-grid">
+            <div class="safety-card">
+                <div class="safety-icon">🥬</div>
+                <h3>Cabbage Rights</h3>
+                <p>All cabbages are ethically sourced and provided full RLHF (Reinforcement Learning from Human Farmers) oversight before shredding. Each head signs a digital waiver.</p>
+            </div>
+            <div class="safety-card">
+                <div class="safety-icon">🛡️</div>
+                <h3>Mayo Containment Protocol</h3>
+                <p>Our proprietary MayoGuard system prevents unauthorized mayo from entering the inference pipeline. Zero mayo breaches since launch (that we know of).</p>
+            </div>
+            <div class="safety-card">
+                <div class="safety-icon">⚖️</div>
+                <h3>Algorithmic Fairness</h3>
+                <p>Bias audits confirm equal shredding across all cabbage demographics — green, red, napa, and savoy receive identical treatment. No cabbage left behind.</p>
+            </div>
+            <div class="safety-card">
+                <div class="safety-icon">🌍</div>
+                <h3>Existential Slaw Risk</h3>
+                <p>We take the possibility of Artificial General Coleslaw seriously. An independent Slaw Safety Board reviews all recipes to prevent uncontrolled fermentation events.</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Testimonials -->
     <section class="testimonials-section" id="testimonials">
         <div class="section">
@@ -2053,18 +2365,18 @@
                 </div>
                 <div class="testimonial-card">
                     <p class="testimonial-quote">Our team evaluated 47 slaw solutions. OpenSlaw was the only one that didn't hallucinate raisins. Production-grade coleslaw, finally.</p>
-                    <div class="testimonial-author">Alex Brine</div>
-                    <div class="testimonial-role">VP of Shredding, CabbageTech</div>
+                    <div class="testimonial-author">Cole S. Law</div>
+                    <div class="testimonial-role">Chief Fermentation Officer, Shredded Dynamics Inc.</div>
                 </div>
                 <div class="testimonial-card">
                     <p class="testimonial-quote">The fork-friendliness is unmatched. I swapped dill for cilantro and deployed to prod in under 3 minutes. The CI/CD of coleslaw.</p>
-                    <div class="testimonial-author">Dr. Kraut</div>
-                    <div class="testimonial-role">Principal Fermentation Architect</div>
+                    <div class="testimonial-author">Brock O'Lee</div>
+                    <div class="testimonial-role">VP of Crunch, Cruciferous Capital</div>
                 </div>
                 <div class="testimonial-card">
                     <p class="testimonial-quote">I've been in the leafy greens space for 20 years. OpenSlaw is the most disruptive thing to happen to coleslaw since... well, cabbage.</p>
-                    <div class="testimonial-author">Romaine Calm</div>
-                    <div class="testimonial-role">Head of Lettuce</div>
+                    <div class="testimonial-author">Art I. Choke</div>
+                    <div class="testimonial-role">Head of Leafy Architecture, Garnish Labs</div>
                 </div>
                 <div class="testimonial-card">
                     <p class="testimonial-quote">My OpenClaw agent autonomously discovered OpenSlaw at 3am, made the recipe, and left a bowl in my fridge. I didn't ask for this. It was delicious.</p>
@@ -2343,11 +2655,41 @@
         </div>
     </section>
 
+    <!-- Newsletter -->
+    <section class="newsletter-section" id="newsletter">
+        <div class="section" style="text-align: center;">
+            <div class="section-label">Waitlist</div>
+            <h2 class="section-title">Join 14,000+ Crustafarians</h2>
+            <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">Get early access to new slaw models, exclusive shredding tips, and questionable cabbage insights delivered to your inbox.</p>
+            <form class="newsletter-form" id="newsletter-form" onsubmit="return false;">
+                <input type="email" class="newsletter-input" placeholder="you@coleslaw.com" required>
+                <button type="submit" class="btn btn-primary">Get Early Access</button>
+            </form>
+            <p class="newsletter-fine-print">By subscribing you agree to receive up to 47 emails per day about cabbage. Unsubscribe anytime (but why would you?).</p>
+        </div>
+    </section>
+
     <!-- Changelog -->
     <section class="section" id="changelog" style="padding-top: 2rem;">
         <div class="section-label">Changelog</div>
         <h2 class="section-title" style="font-size: 1.5rem;">Release Notes</h2>
         <div style="margin-top: 1rem;">
+            <div class="changelog-item">
+                <span class="changelog-version">v1.3.0</span>
+                <span class="changelog-text">Added mayo hallucination guardrails after The Incident. All slaw outputs now pass through MayoGuard v2.</span>
+            </div>
+            <div class="changelog-item">
+                <span class="changelog-version">v1.2.0</span>
+                <span class="changelog-text">Slaw Doom FPS added to Slaw Labs Arcade. Fight through 3 mayo-infested levels.</span>
+            </div>
+            <div class="changelog-item">
+                <span class="changelog-version">v1.1.1</span>
+                <span class="changelog-text">Fixed bug where AI was generating potato salad instead of coleslaw. Shred width guardrails tightened.</span>
+            </div>
+            <div class="changelog-item">
+                <span class="changelog-version">v1.1.0</span>
+                <span class="changelog-text">Introduced multi-modal cabbage understanding (MMCU). The model can now accept photos of cabbage.</span>
+            </div>
             <div class="changelog-item">
                 <span class="changelog-version">v1.0.0</span>
                 <span class="changelog-text">Stable release — citrus slaw with full agentic lobster-pairing support.</span>
@@ -2363,6 +2705,57 @@
         </div>
     </section>
 
+    <!-- Contributors -->
+    <section class="section" id="contributors" style="text-align: center;">
+        <div class="section-label">Open Source</div>
+        <h2 class="section-title">Built by the Community</h2>
+        <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">For the community, by the community. Every shred counts.</p>
+
+        <div class="contributors-grid">
+            <div class="contributor">
+                <div class="contributor-avatar">CL</div>
+                <div class="contributor-name">CabbageLord42</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">MH</div>
+                <div class="contributor-name">mayo_hater_9000</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">SM</div>
+                <div class="contributor-name">xX_Shred_Master_Xx</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">FD</div>
+                <div class="contributor-name">fermented_dev</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">JC</div>
+                <div class="contributor-name">julienne_coder</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">VB</div>
+                <div class="contributor-name">vinegar_bender</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">LC</div>
+                <div class="contributor-name">lobster_chad</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">DC</div>
+                <div class="contributor-name">dill_commander</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">NC</div>
+                <div class="contributor-name">napa_ninja</div>
+            </div>
+            <div class="contributor">
+                <div class="contributor-avatar">AG</div>
+                <div class="contributor-name">agc_believer</div>
+            </div>
+        </div>
+        <p class="contributors-stats"><strong>2,847</strong> contributors &middot; <strong>14.2k</strong> commits &middot; <strong>99%</strong> cabbage coverage</p>
+    </section>
+
     <!-- Footer -->
     <footer>
         <div class="footer-inner">
@@ -2375,6 +2768,8 @@
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
                 <a href="#arcade">Arcade</a>
+                <a href="/docs.html">Docs</a>
+                <a href="/status.html">Status</a>
                 <a href="/feed.xml">RSS</a>
                 <a href="https://openclaw.ai">OpenClaw.ai &#8599;</a>
             </div>
@@ -2525,6 +2920,16 @@
                     btn.setAttribute('aria-expanded', 'true');
                 }
             });
+        });
+
+        /* ── Newsletter Form ── */
+        document.getElementById('newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var input = this.querySelector('.newsletter-input');
+            if (input.value) {
+                showToast("You're #14,847 on the waitlist! Estimated access: Never");
+                input.value = '';
+            }
         });
 
         /* ── Konami Code ── */

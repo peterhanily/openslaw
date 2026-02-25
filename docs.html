@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - OpenSlaw.ai</title>
+    <meta name="description" content="OpenSlaw API Documentation. Build production-grade coleslaw at scale with our REST API. Shred responsibly.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+    <!-- Prevent dark mode flash -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-50: #f0fdf4;
+            --green-100: #dcfce7;
+            --green-200: #bbf7d0;
+            --green-300: #86efac;
+            --green-400: #4ade80;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --green-700: #15803d;
+            --green-800: #166534;
+            --green-900: #14532d;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --code-bg: #1e293b;
+            --code-border: #334155;
+        }
+
+        html[data-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --nav-bg: rgba(15, 23, 42, 0.9);
+            --green-50: #052e16;
+            --green-100: #14532d;
+            --green-200: #166534;
+            --green-300: #15803d;
+            --gray-50: #1e293b;
+            --gray-100: #334155;
+            --gray-200: #475569;
+            --gray-300: #64748b;
+            --gray-400: #94a3b8;
+            --gray-500: #cbd5e1;
+            --gray-600: #e2e8f0;
+            --gray-700: #f1f5f9;
+            --gray-800: #f8fafc;
+            --gray-900: #ffffff;
+            --code-bg: #0f172a;
+            --code-border: #1e293b;
+        }
+
+        html[data-theme="dark"] .toast {
+            background: #334155;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--gray-800);
+            background: var(--bg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .nav-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text span {
+            color: var(--green-600);
+        }
+
+        .nav-tagline {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--green-600);
+        }
+
+        .nav-links a.active {
+            color: var(--green-600);
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            padding: 0.3rem 0.7rem;
+            border-radius: 9999px;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--green-400);
+            color: var(--green-600);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 7rem 1.5rem 3rem;
+            text-align: center;
+            background: linear-gradient(180deg, var(--green-50) 0%, var(--bg) 100%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--green-100);
+            color: var(--green-700);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--green-200);
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: var(--gray-900);
+            max-width: 800px;
+            margin: 0 auto 1rem;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--green-500), var(--green-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--gray-500);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.5;
+        }
+
+        .hero .version-badge {
+            display: inline-block;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.85rem;
+            padding: 0.3rem 0.8rem;
+            background: var(--code-bg);
+            color: #4ade80;
+            border-radius: 0.375rem;
+            border: 1px solid var(--code-border);
+        }
+
+        /* ── Main Content ── */
+        .docs-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        .docs-section {
+            margin-bottom: 3.5rem;
+        }
+
+        .docs-section h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .docs-section h2 .icon {
+            margin-right: 0.5rem;
+        }
+
+        .docs-section > p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.7;
+        }
+
+        .docs-section > p a {
+            color: var(--green-600);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .docs-section > p a:hover {
+            text-decoration: underline;
+        }
+
+        .docs-section > p code {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.85em;
+            background: var(--gray-100);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            color: var(--gray-700);
+        }
+
+        /* ── Code Block ── */
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            border: 1px solid #334155;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+        }
+
+        .code-header span {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .copy-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #94a3b8;
+            background: transparent;
+            border: 1px solid #475569;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: #e2e8f0;
+            border-color: #64748b;
+        }
+
+        .code-body {
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.82rem;
+            line-height: 1.65;
+            color: #e2e8f0;
+            white-space: pre;
+            margin: 0;
+        }
+
+        /* Syntax colors */
+        .syn-key { color: #e2e8f0; }
+        .syn-str { color: #4ade80; }
+        .syn-num { color: #fbbf24; }
+        .syn-bool { color: #f472b6; }
+        .syn-null { color: #94a3b8; }
+        .syn-punc { color: #64748b; }
+        .syn-comment { color: #64748b; font-style: italic; }
+        .syn-curl { color: #38bdf8; }
+        .syn-flag { color: #c084fc; }
+
+        /* ── Endpoint Card ── */
+        .endpoint-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .endpoint-card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .method-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.375rem;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .method-post {
+            background: #166534;
+            color: #4ade80;
+        }
+
+        .method-get {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .endpoint-path {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            font-weight: 600;
+        }
+
+        .endpoint-path .param {
+            color: var(--green-600);
+        }
+
+        .endpoint-desc {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+
+        .endpoint-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-400);
+            margin-bottom: 0.5rem;
+        }
+
+        .endpoint-section {
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Error Table ── */
+        .error-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .error-table th {
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-400);
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .error-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .error-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .error-code-cell {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-weight: 700;
+            color: var(--gray-700) !important;
+            white-space: nowrap;
+        }
+
+        .error-name {
+            font-weight: 600;
+            color: var(--gray-700) !important;
+        }
+
+        .error-table-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        /* ── Info Callout ── */
+        .callout {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+        }
+
+        .callout-icon {
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .callout-info {
+            background: var(--green-50);
+            border: 1px solid var(--green-200);
+            color: var(--green-700);
+        }
+
+        .callout-warn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        html[data-theme="dark"] .callout-warn {
+            background: #422006;
+            border-color: #78350f;
+            color: #fbbf24;
+        }
+
+        /* ── Table of Contents ── */
+        .toc {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 3rem;
+        }
+
+        .toc h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-400);
+            margin-bottom: 0.75rem;
+        }
+
+        .toc ol {
+            list-style: none;
+            counter-reset: toc-counter;
+        }
+
+        .toc ol li {
+            counter-increment: toc-counter;
+            margin-bottom: 0.4rem;
+        }
+
+        .toc ol li::before {
+            content: counter(toc-counter) ".";
+            font-weight: 600;
+            color: var(--gray-400);
+            margin-right: 0.5rem;
+            font-size: 0.85rem;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        }
+
+        .toc ol li a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .toc ol li a:hover {
+            color: var(--green-600);
+        }
+
+        /* ── Divider ── */
+        .docs-divider {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 3rem 0;
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            padding: 3rem 1.5rem 2rem;
+        }
+
+        .footer-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-logo span {
+            color: var(--green-600);
+        }
+
+        .footer-license {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--green-600);
+        }
+
+        .footer-credit {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+        }
+
+        .built-with {
+            margin-top: 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        .built-with code {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            background: var(--gray-100);
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.2rem;
+            font-size: 0.72rem;
+            color: var(--gray-500);
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #111827;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            max-width: 90vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Rate Limit Bar ── */
+        .rate-limit-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .rate-limit-bar .tier {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--gray-900);
+            min-width: 90px;
+        }
+
+        .rate-limit-bar .bar-bg {
+            flex: 1;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rate-limit-bar .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-fill-free {
+            width: 30%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+        }
+
+        .bar-fill-enterprise {
+            width: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
+        }
+
+        .rate-limit-bar .limit {
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+
+        /* ── SDKs ── */
+        .sdk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .sdk-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .sdk-card:hover {
+            border-color: var(--green-400);
+        }
+
+        .sdk-card .sdk-icon {
+            font-size: 1.3rem;
+        }
+
+        .sdk-card .sdk-status {
+            margin-left: auto;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-400);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .nav-tagline {
+                display: none;
+            }
+
+            .nav-links a {
+                display: none;
+            }
+
+            .hero {
+                padding: 5rem 1.5rem 2rem;
+            }
+
+            .endpoint-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .error-table {
+                font-size: 0.8rem;
+            }
+
+            .error-table th,
+            .error-table td {
+                padding: 0.6rem 0.75rem;
+            }
+
+            .rate-limit-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .rate-limit-bar .bar-bg {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .docs-container {
+                padding: 1.5rem 1rem 3rem;
+            }
+
+            .endpoint-card {
+                padding: 1.25rem;
+            }
+
+            .code-body {
+                padding: 0.75rem 1rem;
+            }
+
+            .code-body pre {
+                font-size: 0.72rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-inner">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🥬</span>
+                    <span class="logo-text">Open<span>Slaw</span>.ai</span>
+                </a>
+                <span class="nav-tagline">Agentic Slaw Intelligence</span>
+            </div>
+            <div class="nav-links">
+                <a href="/#recipe">Recipe</a>
+                <a href="/#features">Why OpenSlaw</a>
+                <a href="/#pricing">Pricing</a>
+                <a href="/#faq">FAQ</a>
+                <a href="/#arcade">Arcade</a>
+                <a href="/docs.html" class="active">Docs</a>
+                <button id="theme-toggle" class="theme-toggle">Night Slaw</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">REST API &middot; Now with 40% more crunch per request</div>
+        <h1>OpenSlaw <span class="highlight">API</span> Documentation</h1>
+        <p class="subtitle">Build production-grade coleslaw at scale. Programmatically shred, dress, and serve with confidence. Zero mayo. Zero hallucinations.</p>
+        <div class="version-badge">v1.0.0 &mdash; stable (as stable as a cabbage can be)</div>
+    </section>
+
+    <!-- Docs Content -->
+    <div class="docs-container">
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>On This Page</h3>
+            <ol>
+                <li><a href="#authentication">Authentication</a></li>
+                <li><a href="#rate-limits">Rate Limits</a></li>
+                <li><a href="#endpoints">Endpoints</a></li>
+                <li><a href="#errors">Error Codes</a></li>
+                <li><a href="#sdks">SDKs &amp; Libraries</a></li>
+            </ol>
+        </div>
+
+        <!-- Authentication -->
+        <div class="docs-section" id="authentication">
+            <h2><span class="icon">🔑</span> Authentication</h2>
+            <p>All requests must include your <strong>Slaw Key</strong> in the <code>Authorization</code> header. Keys can be generated at <a href="#">dashboard.openslaw.ai</a> (coming soon, probably never). Each key is lovingly hand-shredded by our security team, which is one intern and a very alert cabbage.</p>
+            <p>All keys are prefixed with <code>slaw_sk_</code> followed by an environment indicator (<code>live</code> or <code>test</code>) and a cryptographically random string that we promise is not just the word "cabbage" hashed repeatedly.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>HTTP Header</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <div class="code-body">
+<pre><span class="syn-key">Authorization</span><span class="syn-punc">:</span> <span class="syn-str">Bearer slaw_sk_live_cabb4g3_r3allyFr35h_kR0nChY</span></pre>
+                </div>
+            </div>
+
+            <div class="callout callout-warn">
+                <span class="callout-icon">⚠️</span>
+                <div><strong>Keep your Slaw Keys secret.</strong> If your key leaks, anyone can generate coleslaw on your behalf. This may sound harmless, but unauthorized shredding is a federal coleslaw offense in 12 states and one unincorporated lobster territory.</div>
+            </div>
+
+            <div class="callout callout-info">
+                <span class="callout-icon">🥬</span>
+                <div><strong>Test mode:</strong> Use <code>slaw_sk_test_</code> keys to generate slaw in a sandbox. Test slaw is not edible and should not be served to lobsters, investors, or auditors.</div>
+            </div>
+        </div>
+
+        <hr class="docs-divider">
+
+        <!-- Rate Limits -->
+        <div class="docs-section" id="rate-limits">
+            <h2><span class="icon">⚡</span> Rate Limits</h2>
+            <p>Rate limits are measured in <strong>shreds per minute</strong> (spm). If you exceed your limit, the API will return <code>429 Too Many Shreds</code> and your requests will be queued behind a very slow mandoline. The <code>X-Shred-Remaining</code> and <code>X-Shred-Reset</code> headers are included in every response.</p>
+
+            <div class="rate-limit-bar">
+                <div class="tier">Free</div>
+                <div class="bar-bg"><div class="bar-fill bar-fill-free"></div></div>
+                <div class="limit">1,000 spm</div>
+            </div>
+
+            <div class="rate-limit-bar">
+                <div class="tier">Enterprise</div>
+                <div class="bar-bg"><div class="bar-fill bar-fill-enterprise"></div></div>
+                <div class="limit">Unlimited*</div>
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--gray-400); margin-top: 0.25rem;">* "Unlimited" means we haven't figured out what the limit is yet. Our cabbages are working on it.</p>
+        </div>
+
+        <hr class="docs-divider">
+
+        <!-- Endpoints -->
+        <div class="docs-section" id="endpoints">
+            <h2><span class="icon">🔗</span> Endpoints</h2>
+            <p>All endpoints are served from <code>https://api.openslaw.ai/v1</code>. Responses are JSON-encoded. All shredding operations are performed asynchronously by our fleet of agentic cabbage processors. Base URL will never change, unlike our opinions on dressing ratios.</p>
+
+            <!-- Endpoint 1: POST /v1/slaw/generate -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/v1/slaw/generate</span>
+                </div>
+                <p class="endpoint-desc">Generate a new coleslaw recipe from scratch. Our agentic shredding pipeline will analyze your parameters, consult the cabbage oracle, and produce a deterministic slaw output. Results are cached for freshness (ironic, we know). The <code>lobster_pairing</code> flag activates our proprietary Crustafarian Compatibility Engine.</p>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Request Body</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"cabbage_type"</span><span class="syn-punc">:</span>     <span class="syn-str">"green"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"dressing"</span><span class="syn-punc">:</span>         <span class="syn-str">"citrus"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"lobster_pairing"</span><span class="syn-punc">:</span>  <span class="syn-bool">true</span><span class="syn-punc">,</span>
+  <span class="syn-key">"shred_width_mm"</span><span class="syn-punc">:</span>   <span class="syn-num">3</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Response &mdash; 200 OK</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"id"</span><span class="syn-punc">:</span>                <span class="syn-str">"slaw_abc123"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"status"</span><span class="syn-punc">:</span>            <span class="syn-str">"shredding"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"shred_quality"</span><span class="syn-punc">:</span>     <span class="syn-num">0.95</span><span class="syn-punc">,</span>
+  <span class="syn-key">"mayo_probability"</span><span class="syn-punc">:</span>  <span class="syn-num">0.0</span><span class="syn-punc">,</span>
+  <span class="syn-key">"crunch_factor"</span><span class="syn-punc">:</span>     <span class="syn-num">98</span><span class="syn-punc">,</span>
+  <span class="syn-key">"estimated_time"</span><span class="syn-punc">:</span>    <span class="syn-str">"15m"</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">curl Example</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>bash</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-curl">curl</span> <span class="syn-flag">-X</span> POST https://api.openslaw.ai/v1/slaw/generate \
+  <span class="syn-flag">-H</span> <span class="syn-str">"Authorization: Bearer slaw_sk_live_cabb4g3..."</span> \
+  <span class="syn-flag">-H</span> <span class="syn-str">"Content-Type: application/json"</span> \
+  <span class="syn-flag">-d</span> <span class="syn-str">'{
+    "cabbage_type": "green",
+    "dressing": "citrus",
+    "lobster_pairing": true,
+    "shred_width_mm": 3
+  }'</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info">
+                    <span class="callout-icon">🦞</span>
+                    <div>Setting <code>lobster_pairing</code> to <code>true</code> automatically excludes mayo-based dressings. The Crustafarian community has spoken, and they were very loud about it.</div>
+                </div>
+            </div>
+
+            <!-- Endpoint 2: GET /v1/slaw/{id} -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/v1/slaw/<span class="param">{id}</span></span>
+                </div>
+                <p class="endpoint-desc">Retrieve a previously generated slaw by its unique ID. If the slaw is still being shredded, the <code>status</code> field will reflect the current stage of the pipeline: <code>shredding</code>, <code>dressing</code>, <code>resting</code>, or <code>ready</code>. We do not support a <code>wilted</code> status because our slaw never wilts. That is a promise and a threat.</p>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Response &mdash; 200 OK</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"id"</span><span class="syn-punc">:</span>                     <span class="syn-str">"slaw_abc123"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"status"</span><span class="syn-punc">:</span>                 <span class="syn-str">"ready"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"ingredients"</span><span class="syn-punc">:</span> <span class="syn-punc">[</span>
+    <span class="syn-str">"green_cabbage"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"carrots"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"apple_cider_vinegar"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"olive_oil"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"honey"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"lemon"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"celery_seed"</span><span class="syn-punc">,</span>
+    <span class="syn-str">"dill"</span>
+  <span class="syn-punc">]</span><span class="syn-punc">,</span>
+  <span class="syn-key">"crunch_factor"</span><span class="syn-punc">:</span>          <span class="syn-num">98</span><span class="syn-punc">,</span>
+  <span class="syn-key">"lobster_compatibility"</span><span class="syn-punc">:</span>  <span class="syn-num">0.99</span><span class="syn-punc">,</span>
+  <span class="syn-key">"hallucination_score"</span><span class="syn-punc">:</span>    <span class="syn-num">0.0</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info">
+                    <span class="callout-icon">🧪</span>
+                    <div>The <code>hallucination_score</code> is always <code>0.0</code>. Unlike other AI companies, we do not hallucinate ingredients. If we say there is dill, there is dill. We have a very strict dill policy.</div>
+                </div>
+            </div>
+
+            <!-- Endpoint 3: POST /v1/slaw/evaluate -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/v1/slaw/evaluate</span>
+                </div>
+                <p class="endpoint-desc">Run a comprehensive quality evaluation on a generated slaw. Our evaluation pipeline tests for crunch integrity, lobster harmony, and the complete absence of mayo. Think of it as CI/CD for coleslaw. We call it CS/CD (Coleslaw Shredding / Continuous Dressing).</p>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Request Body</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"slaw_id"</span><span class="syn-punc">:</span>   <span class="syn-str">"slaw_abc123"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"criteria"</span><span class="syn-punc">:</span>  <span class="syn-punc">[</span><span class="syn-str">"crunch"</span><span class="syn-punc">,</span> <span class="syn-str">"lobster_pairing"</span><span class="syn-punc">,</span> <span class="syn-str">"mayo_absence"</span><span class="syn-punc">]</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Response &mdash; 200 OK</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"score"</span><span class="syn-punc">:</span>     <span class="syn-num">97.3</span><span class="syn-punc">,</span>
+  <span class="syn-key">"verdict"</span><span class="syn-punc">:</span>   <span class="syn-str">"production_ready"</span><span class="syn-punc">,</span>
+  <span class="syn-key">"warnings"</span><span class="syn-punc">:</span>  <span class="syn-punc">[]</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-warn">
+                    <span class="callout-icon">⚠️</span>
+                    <div>A score below <code>70</code> returns <code>"verdict": "needs_more_cabbage"</code>. A score below <code>30</code> returns <code>"verdict": "is_this_even_coleslaw"</code>. We do not judge. (We judge a little.)</div>
+                </div>
+            </div>
+
+            <!-- Endpoint 4: GET /v1/ingredients -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/v1/ingredients</span>
+                </div>
+                <p class="endpoint-desc">List all available ingredients in the OpenSlaw pantry. Each ingredient includes its current freshness status and whether it has been pre-approved by the Shred Readiness Committee (a rotating panel of three senior cabbages and one carrot with seniority).</p>
+
+                <div class="endpoint-section">
+                    <div class="endpoint-label">Response &mdash; 200 OK</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>application/json</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"ingredients"</span><span class="syn-punc">:</span> <span class="syn-punc">[</span>
+    <span class="syn-punc">{</span>
+      <span class="syn-key">"name"</span><span class="syn-punc">:</span>        <span class="syn-str">"green_cabbage"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"status"</span><span class="syn-punc">:</span>      <span class="syn-str">"fresh"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"shred_ready"</span><span class="syn-punc">:</span> <span class="syn-bool">true</span>
+    <span class="syn-punc">}</span><span class="syn-punc">,</span>
+    <span class="syn-punc">{</span>
+      <span class="syn-key">"name"</span><span class="syn-punc">:</span>        <span class="syn-str">"carrots"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"status"</span><span class="syn-punc">:</span>      <span class="syn-str">"fresh"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"shred_ready"</span><span class="syn-punc">:</span> <span class="syn-bool">true</span>
+    <span class="syn-punc">}</span><span class="syn-punc">,</span>
+    <span class="syn-punc">{</span>
+      <span class="syn-key">"name"</span><span class="syn-punc">:</span>        <span class="syn-str">"mayo"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"status"</span><span class="syn-punc">:</span>      <span class="syn-str">"banned"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"shred_ready"</span><span class="syn-punc">:</span> <span class="syn-bool">false</span>
+    <span class="syn-punc">}</span><span class="syn-punc">,</span>
+    <span class="syn-punc">{</span>
+      <span class="syn-key">"name"</span><span class="syn-punc">:</span>        <span class="syn-str">"dill"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"status"</span><span class="syn-punc">:</span>      <span class="syn-str">"aromatic"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"shred_ready"</span><span class="syn-punc">:</span> <span class="syn-bool">true</span>
+    <span class="syn-punc">}</span><span class="syn-punc">,</span>
+    <span class="syn-punc">{</span>
+      <span class="syn-key">"name"</span><span class="syn-punc">:</span>        <span class="syn-str">"lemon"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"status"</span><span class="syn-punc">:</span>      <span class="syn-str">"zesty"</span><span class="syn-punc">,</span>
+      <span class="syn-key">"shred_ready"</span><span class="syn-punc">:</span> <span class="syn-bool">true</span>
+    <span class="syn-punc">}</span>
+  <span class="syn-punc">]</span>
+<span class="syn-punc">}</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info">
+                    <span class="callout-icon">🚫</span>
+                    <div>Mayo will always return <code>"status": "banned"</code> and <code>"shred_ready": false</code>. This is not a bug. This is doctrine.</div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="docs-divider">
+
+        <!-- Error Codes -->
+        <div class="docs-section" id="errors">
+            <h2><span class="icon">🚨</span> Error Codes</h2>
+            <p>When something goes wrong (and in the coleslaw business, things go wrong in crunchy and unexpected ways), the API returns a standard error object. Every error includes a <code>code</code>, a <code>message</code>, and occasionally a <code>suggestion</code> that is almost never helpful.</p>
+
+            <div class="code-block" style="margin-bottom: 1.5rem;">
+                <div class="code-header">
+                    <span>Error Response Format</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <div class="code-body">
+<pre><span class="syn-punc">{</span>
+  <span class="syn-key">"error"</span><span class="syn-punc">:</span> <span class="syn-punc">{</span>
+    <span class="syn-key">"code"</span><span class="syn-punc">:</span>       <span class="syn-num">418</span><span class="syn-punc">,</span>
+    <span class="syn-key">"type"</span><span class="syn-punc">:</span>       <span class="syn-str">"im_a_salad"</span><span class="syn-punc">,</span>
+    <span class="syn-key">"message"</span><span class="syn-punc">:</span>    <span class="syn-str">"This endpoint is for coleslaw, not salad."</span><span class="syn-punc">,</span>
+    <span class="syn-key">"suggestion"</span><span class="syn-punc">:</span> <span class="syn-str">"Have you tried adding cabbage?"</span>
+  <span class="syn-punc">}</span>
+<span class="syn-punc">}</span></pre>
+                </div>
+            </div>
+
+            <div class="error-table-wrap">
+                <table class="error-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="error-code-cell">400</td>
+                            <td class="error-name">Bad Shredding Request</td>
+                            <td>Your request body is malformed, missing required fields, or contains ingredients we do not recognize (looking at you, raisins).</td>
+                        </tr>
+                        <tr>
+                            <td class="error-code-cell">401</td>
+                            <td class="error-name">Invalid Slaw Key</td>
+                            <td>Your API key is missing, expired, or was clearly just mashed on a keyboard. Double-check your <code>slaw_sk_</code> prefix.</td>
+                        </tr>
+                        <tr>
+                            <td class="error-code-cell">418</td>
+                            <td class="error-name">I'm a Salad</td>
+                            <td>The request describes a salad, not a coleslaw. We have standards. Coleslaw has cabbage. Your request did not. Please reflect on your choices.</td>
+                        </tr>
+                        <tr>
+                            <td class="error-code-cell">429</td>
+                            <td class="error-name">Too Many Shreds</td>
+                            <td>You have exceeded your rate limit. Slow down. The cabbages need time to recover. Consider upgrading to Enterprise, or just waiting a minute like a normal person.</td>
+                        </tr>
+                        <tr>
+                            <td class="error-code-cell">500</td>
+                            <td class="error-name">Internal Slaw Error</td>
+                            <td>Something broke on our end. Possibly a rogue carrot in the pipeline. Our on-call engineer (the cabbage) has been paged.</td>
+                        </tr>
+                        <tr>
+                            <td class="error-code-cell">503</td>
+                            <td class="error-name">Cabbage Unavailable</td>
+                            <td>The cabbage supply chain is temporarily disrupted. This is usually caused by peak shredding hours (lunch), a regional cabbage shortage, or the annual Cabbage Migration.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <hr class="docs-divider">
+
+        <!-- SDKs -->
+        <div class="docs-section" id="sdks">
+            <h2><span class="icon">📦</span> SDKs &amp; Libraries</h2>
+            <p>We are committed to meeting developers where they are, as long as where they are involves making coleslaw. Official client libraries are "in progress," which in startup terms means someone added a TODO comment six months ago.</p>
+
+            <div class="sdk-grid">
+                <div class="sdk-card">
+                    <span class="sdk-icon">🟨</span>
+                    <span>openslaw-js</span>
+                    <span class="sdk-status">Coming Soon</span>
+                </div>
+                <div class="sdk-card">
+                    <span class="sdk-icon">🐍</span>
+                    <span>openslaw-py</span>
+                    <span class="sdk-status">Coming Soon</span>
+                </div>
+                <div class="sdk-card">
+                    <span class="sdk-icon">🦀</span>
+                    <span>openslaw-rs</span>
+                    <span class="sdk-status">Coming Soon</span>
+                </div>
+                <div class="sdk-card">
+                    <span class="sdk-icon">🐹</span>
+                    <span>openslaw-go</span>
+                    <span class="sdk-status">Coming Soon</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--gray-400);">In the meantime, just use curl. Curl never lets you down. Curl is the coleslaw of HTTP clients: simple, reliable, and goes with everything.</p>
+        </div>
+
+        <hr class="docs-divider">
+
+        <!-- Changelog teaser -->
+        <div class="docs-section">
+            <h2><span class="icon">📋</span> Changelog</h2>
+            <p>All API changes are logged, versioned, and argued about extensively in our internal Slack channel #cabbage-wars.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recent Changes</span>
+                </div>
+                <div class="code-body">
+<pre><span class="syn-comment">## v1.0.0 (2025-01-15) — Initial Release</span>
+<span class="syn-str">+ Added POST /v1/slaw/generate</span>
+<span class="syn-str">+ Added GET  /v1/slaw/{id}</span>
+<span class="syn-str">+ Added POST /v1/slaw/evaluate</span>
+<span class="syn-str">+ Added GET  /v1/ingredients</span>
+<span class="syn-key">- Removed mayo from all possible outputs</span>
+<span class="syn-comment">~ Fixed bug where crunch_factor occasionally returned negative values</span>
+<span class="syn-comment">  (coleslaw should never be anti-crunchy)</span>
+
+<span class="syn-comment">## v0.9.0-beta (2024-11-01) — "The Soft Launch"</span>
+<span class="syn-key">- Internal beta. Three people used it.</span>
+<span class="syn-key">  Two of them were the same person.</span>
+<span class="syn-comment">~ Known issue: lobster_compatibility sometimes returned 🦞 instead of a float.</span>
+<span class="syn-comment">  We considered keeping this as a feature.</span></pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-logo">🥬 Open<span>Slaw</span>.ai</div>
+            <p class="footer-license">Licensed under the <strong>MIT</strong> (Mayo Is Terrific) License</p>
+            <div class="footer-links">
+                <a href="https://github.com/peterhanily/openslaw">GitHub</a>
+                <a href="/#recipe">Recipe</a>
+                <a href="/#features">Features</a>
+                <a href="/#pricing">Pricing</a>
+                <a href="/#faq">FAQ</a>
+                <a href="/#arcade">Arcade</a>
+                <a href="/docs.html">Docs</a>
+                <a href="/feed.xml">RSS</a>
+            </div>
+            <div class="built-with">
+                Built with <code>HTML</code> <code>CSS</code> <code>Vanilla JS</code> &middot;
+                Hosted on <code>GitHub Pages</code> &middot;
+                Served via <code>Cloudflare</code> &middot;
+                API powered by <code>zero actual servers</code> &middot;
+                Documented by <code>one sleep-deprived cabbage</code>
+            </div>
+            <p class="footer-credit">
+                No cabbages were harmed in the making of this documentation. Several were mildly inconvenienced.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ── Dark Mode ── */
+        var themeToggle = document.getElementById('theme-toggle');
+
+        function updateToggleLabel() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeToggle.textContent = isDark ? 'Day Slaw' : 'Night Slaw';
+        }
+
+        updateToggleLabel();
+
+        themeToggle.addEventListener('click', function() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateToggleLabel();
+            showToast(document.documentElement.getAttribute('data-theme') === 'dark' ? 'Night Slaw activated' : 'Day Slaw activated');
+        });
+
+        /* ── Toast ── */
+        var toastTimer = null;
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
+        }
+
+        /* ── Copy Code ── */
+        function copyCode(btn) {
+            var codeBody = btn.closest('.code-block').querySelector('.code-body pre');
+            var text = codeBody.textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                btn.textContent = 'Copied!';
+                showToast('Copied to clipboard');
+                setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+            }).catch(function() {
+                /* Fallback for older browsers */
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                btn.textContent = 'Copied!';
+                showToast('Copied to clipboard');
+                setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+            });
+        }
+
+        /* ── Smooth scroll for TOC ── */
+        document.querySelectorAll('.toc a').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    var offset = 80;
+                    var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top: top, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

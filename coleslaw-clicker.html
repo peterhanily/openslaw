@@ -414,12 +414,12 @@
 
         // ── Upgrades ──
         var upgrades = [
-            { id: 'knife',    name: 'Sharper Knife',        emoji: '🔪', baseCost: 10,    perClick: 1,   perSec: 0,   desc: '+1 per click' },
-            { id: 'intern',   name: 'Intern',               emoji: '👨‍🍳', baseCost: 50,    perClick: 0,   perSec: 1,   desc: '+1 per second' },
-            { id: 'board',    name: 'Second Cutting Board',  emoji: '🪵', baseCost: 200,   perClick: 0,   perSec: 5,   desc: '+5 per second' },
-            { id: 'ai',       name: 'AI Shredder',           emoji: '🤖', baseCost: 1000,  perClick: 0,   perSec: 20,  desc: '+20 per second' },
-            { id: 'gpu',      name: 'GPU Julienne',          emoji: '⚡', baseCost: 5000,  perClick: 0,   perSec: 100, desc: '+100 per second' },
-            { id: 'quantum',  name: 'Quantum Slaw Engine',   emoji: '🔮', baseCost: 25000, perClick: 0,   perSec: 500, desc: '+500 per second' }
+            { id: 'knife',    name: 'Sharper Knife',        emoji: '🔪', baseCost: 10,    perClick: 1,   perSec: 0,   desc: '+1 per click',     flavor: 'Forged from recycled legacy slaw infrastructure' },
+            { id: 'intern',   name: 'Intern',               emoji: '👨‍🍳', baseCost: 50,    perClick: 0,   perSec: 1,   desc: '+1 per second',    flavor: 'Works for exposure and coleslaw samples' },
+            { id: 'board',    name: 'Second Cutting Board',  emoji: '🪵', baseCost: 200,   perClick: 0,   perSec: 5,   desc: '+5 per second',    flavor: 'Horizontal scaling for your shred pipeline' },
+            { id: 'ai',       name: 'AI Shredder',           emoji: '🤖', baseCost: 1000,  perClick: 0,   perSec: 20,  desc: '+20 per second',   flavor: 'Uses blockchain to optimize shred patterns' },
+            { id: 'gpu',      name: 'GPU Julienne',          emoji: '⚡', baseCost: 5000,  perClick: 0,   perSec: 100, desc: '+100 per second',  flavor: 'CUDA-accelerated cabbage destruction' },
+            { id: 'quantum',  name: 'Quantum Slaw Engine',   emoji: '🔮', baseCost: 25000, perClick: 0,   perSec: 500, desc: '+500 per second',  flavor: 'Shreds cabbage in all possible universes simultaneously' }
         ];
 
         // ── Milestones ──
@@ -546,6 +546,7 @@
                             (owned > 0 ? ' <span class="upgrade-count">x' + owned + '</span>' : '') +
                         '</div>' +
                         '<div class="upgrade-desc">' + u.desc + '</div>' +
+                        (u.flavor ? '<div class="upgrade-desc" style="color:#475569;font-style:italic;margin-top:0.15rem;">' + u.flavor + '</div>' : '') +
                     '</div>' +
                     '<div class="upgrade-cost">' + formatNum(cost) + '</div>';
 

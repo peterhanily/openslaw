@@ -120,11 +120,11 @@
         var pipeTimer = 0;
 
         var PIPE_TYPES = [
-            { name: 'mayo',      color: '#fefce8', dark: '#fde68a', highlight: '#fffbeb', lip: '#eab308', emoji: '🥛', label: 'MAYO',         deathMsg: "Mayo'd!" },
-            { name: 'raisin',    color: '#7c3aed', dark: '#6d28d9', highlight: '#a78bfa', lip: '#5b21b6', emoji: '🍇', label: 'RAISINS',      deathMsg: "Raisin'd!" },
-            { name: 'pineapple', color: '#f59e0b', dark: '#d97706', highlight: '#fbbf24', lip: '#b45309', emoji: '🍍', label: 'PINEAPPLE',    deathMsg: "Pineapple'd!" },
-            { name: 'badslaw',   color: '#64748b', dark: '#475569', highlight: '#94a3b8', lip: '#334155', emoji: '🥗', label: 'LEGACY SLAW',  deathMsg: 'Legacy slaw!' },
-            { name: 'marsh',     color: '#fecdd3', dark: '#fda4af', highlight: '#fff1f2', lip: '#e11d48', emoji: '🤍', label: 'MARSHMALLOWS', deathMsg: "Marshmallow'd!" },
+            { name: 'mayo',      color: '#fefce8', dark: '#fde68a', highlight: '#fffbeb', lip: '#eab308', emoji: '🥛', label: 'MAYO',         deathMsgs: ["Mayo'd!", "Emulsified!", "Drowned in mayo!", "The mayo always wins.", "Slippery finish."] },
+            { name: 'raisin',    color: '#7c3aed', dark: '#6d28d9', highlight: '#a78bfa', lip: '#5b21b6', emoji: '🍇', label: 'RAISINS',      deathMsgs: ["Raisin'd!", "Grape expectations.", "Dried out.", "Wrinkled by raisins.", "Trail mix claims another."] },
+            { name: 'pineapple', color: '#f59e0b', dark: '#d97706', highlight: '#fbbf24', lip: '#b45309', emoji: '🍍', label: 'PINEAPPLE',    deathMsgs: ["Pineapple'd!", "Tropical disaster!", "Does NOT belong!", "Juiced.", "Aloha means goodbye."] },
+            { name: 'badslaw',   color: '#64748b', dark: '#475569', highlight: '#94a3b8', lip: '#334155', emoji: '🥗', label: 'LEGACY SLAW',  deathMsgs: ["Legacy slaw!", "Deprecated!", "Tech debt strikes again.", "Should've migrated.", "EOL reached."] },
+            { name: 'marsh',     color: '#fecdd3', dark: '#fda4af', highlight: '#fff1f2', lip: '#e11d48', emoji: '🤍', label: 'MARSHMALLOWS', deathMsgs: ["Marshmallow'd!", "Puffed out!", "Fluffed to death.", "S'more like s'less.", "Squished."] },
         ];
         var lastDeathMsg = '';
 
@@ -862,8 +862,10 @@
                 var p = pipes[i];
                 var px = p.x - 5, pw = PIPE_W + 10;
                 if (lx + lw > px && lx < px + pw) {
-                    if (ly < p.topH) return { hit: true, msg: p.type.deathMsg };
-                    if (ly + lh > p.topH + PIPE_GAP) return { hit: true, msg: p.type.deathMsg };
+                    var msgs = p.type.deathMsgs;
+                    var msg = msgs[Math.floor(Math.random() * msgs.length)];
+                    if (ly < p.topH) return { hit: true, msg: msg };
+                    if (ly + lh > p.topH + PIPE_GAP) return { hit: true, msg: msg };
                 }
             }
             return { hit: false };
