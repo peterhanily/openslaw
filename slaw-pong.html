@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slaw Pong — OpenSlaw.ai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .game-header h1 span {
+            color: #4ade80;
+        }
+
+        .game-header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .game-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(22, 163, 74, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        canvas {
+            display: block;
+            touch-action: manipulation;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .game-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .game-footer a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .game-footer a:hover { text-decoration: underline; }
+
+        .controls-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #4ade80;
+            color: #4ade80;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2s forwards;
+            white-space: nowrap;
+        }
+
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🏓 Slaw <span>Pong</span></h1>
+        <p>The classic, but with lobsters and questionable ingredients.</p>
+    </div>
+    <div class="game-container">
+        <canvas id="game" width="500" height="600"></canvas>
+    </div>
+    <div class="game-footer">
+        <a href="/">&larr; Back to OpenSlaw.ai</a>
+        <div class="controls-hint">Mouse/touch to move &bull; Arrow keys / A-D as fallback</div>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        var canvas = document.getElementById('game');
+        var ctx = canvas.getContext('2d');
+        var W = 500;
+        var H = 600;
+
+        // ── State machine ──
+        var MENU = 0, PLAYING = 1, POINT_SCORED = 2, GAME_WON = 3;
+        var state = MENU;
+
+        // ── Scores ──
+        var playerScore = 0;
+        var aiScore = 0;
+        var WIN_SCORE = 7;
+        var winStreak = parseInt(localStorage.getItem('slaw-pong-wins') || '0');
+        var winner = ''; // 'player' or 'ai'
+        var lastScorer = ''; // 'player' or 'ai' — who scored the last point
+
+        // ── Frame tracking ──
+        var frame = 0;
+        var pointPauseTimer = 0;
+        var POINT_PAUSE_FRAMES = 90; // ~1.5s at 60fps
+
+        // ── Paddle config ──
+        var PADDLE_H = 12;
+        var PADDLE_R = 6; // border-radius
+        var PLAYER_PADDLE_W = 100;
+        var AI_PADDLE_W = 100;
+        var PLAYER_Y = H - 30 - PADDLE_H;
+        var AI_Y = 30;
+        var PADDLE_SPEED = 7; // keyboard speed
+
+        // ── Player paddle ──
+        var playerX = (W - PLAYER_PADDLE_W) / 2;
+        var playerW = PLAYER_PADDLE_W;
+
+        // ── AI paddle ──
+        var aiX = (W - AI_PADDLE_W) / 2;
+        var aiW = AI_PADDLE_W;
+        var AI_SPEED_FACTOR = 0.04; // smoothing factor — lower = more beatable
+        var AI_REACTION_NOISE = 15; // pixels of imprecision
+
+        // ── Ball ──
+        var BALL_R = 10;
+        var BASE_SPEED = 5;
+        var SPEED_INCREMENT = 0.3;
+        var MAX_SPEED = 12;
+        var ballX = W / 2;
+        var ballY = H / 2;
+        var ballDX = 0;
+        var ballDY = 0;
+        var ballSpeed = BASE_SPEED;
+        var rallyCount = 0;
+
+        // ── Ball trail ──
+        var trail = [];
+        var MAX_TRAIL = 8;
+
+        // ── Power-ups ──
+        var POWERUP_TYPES = [
+            { emoji: '🦞', name: 'Lobster Boost', key: 'lobster' },
+            { emoji: '🥛', name: 'Mayo Slip', key: 'mayo' },
+            { emoji: '⚡', name: 'Speed Slaw', key: 'speed' }
+        ];
+        var powerup = null; // { x, y, type, timer }
+        var powerupSpawnTimer = 0;
+        var activePowerup = null; // { key, timer, name }
+        var nextPowerupDelay = randomPowerupDelay();
+        var powerupTypeIndex = 0;
+
+        // ── Input ──
+        var keys = { left: false, right: false };
+        var mouseX = -1;
+        var useMouseControl = false;
+
+        // ── Toast ──
+        function showToast(msg) {
+            var el = document.createElement('div');
+            el.className = 'toast';
+            el.textContent = msg;
+            document.getElementById('toastContainer').appendChild(el);
+            setTimeout(function() { el.remove(); }, 2300);
+        }
+
+        // ── Helpers ──
+        function randomPowerupDelay() {
+            return (8 + Math.random() * 4) * 60; // 8-12 seconds in frames
+        }
+
+        function roundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
+
+        function resetBall(towardPlayer) {
+            ballX = W / 2;
+            ballY = H / 2;
+            trail = [];
+            rallyCount = 0;
+            ballSpeed = BASE_SPEED;
+
+            var angle = (Math.random() * 0.8 + 0.2) * (Math.random() < 0.5 ? 1 : -1);
+            ballDX = Math.sin(angle) * ballSpeed;
+            ballDY = (towardPlayer ? 1 : -1) * Math.abs(Math.cos(angle) * ballSpeed);
+        }
+
+        function resetPaddles() {
+            playerW = PLAYER_PADDLE_W;
+            aiW = AI_PADDLE_W;
+            playerX = (W - playerW) / 2;
+            aiX = (W - aiW) / 2;
+        }
+
+        function clearPowerups() {
+            powerup = null;
+            activePowerup = null;
+            powerupSpawnTimer = 0;
+            nextPowerupDelay = randomPowerupDelay();
+        }
+
+        function startGame() {
+            playerScore = 0;
+            aiScore = 0;
+            winner = '';
+            resetPaddles();
+            clearPowerups();
+            resetBall(false);
+            state = PLAYING;
+        }
+
+        // ── Input handlers ──
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+                useMouseControl = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+                useMouseControl = false;
+            }
+            if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                if (state === MENU) {
+                    startGame();
+                } else if (state === GAME_WON) {
+                    state = MENU;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', function(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var scaleX = W / rect.width;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            useMouseControl = true;
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            var rect = canvas.getBoundingClientRect();
+            var scaleX = W / rect.width;
+            var touch = e.touches[0];
+            mouseX = (touch.clientX - rect.left) * scaleX;
+            useMouseControl = true;
+        }, { passive: false });
+
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            var rect = canvas.getBoundingClientRect();
+            var scaleX = W / rect.width;
+            var touch = e.touches[0];
+            mouseX = (touch.clientX - rect.left) * scaleX;
+            useMouseControl = true;
+
+            if (state === MENU) {
+                startGame();
+            } else if (state === GAME_WON) {
+                state = MENU;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('click', function() {
+            if (state === MENU) {
+                startGame();
+            } else if (state === GAME_WON) {
+                state = MENU;
+            }
+        });
+
+        // ── Update ──
+        function update() {
+            frame++;
+
+            if (state === POINT_SCORED) {
+                pointPauseTimer--;
+                if (pointPauseTimer <= 0) {
+                    // Check for game win
+                    if (playerScore >= WIN_SCORE) {
+                        winner = 'player';
+                        winStreak++;
+                        localStorage.setItem('slaw-pong-wins', winStreak.toString());
+                        state = GAME_WON;
+                    } else if (aiScore >= WIN_SCORE) {
+                        winner = 'ai';
+                        winStreak = 0;
+                        localStorage.setItem('slaw-pong-wins', '0');
+                        state = GAME_WON;
+                    } else {
+                        // Reset for next point — ball goes toward the player who was scored on
+                        clearPowerups();
+                        resetPaddles();
+                        resetBall(lastScorer === 'ai'); // if AI scored, ball goes toward player (down)
+                        state = PLAYING;
+                    }
+                }
+                return;
+            }
+
+            if (state !== PLAYING) return;
+
+            // ── Player paddle movement ──
+            if (useMouseControl && mouseX >= 0) {
+                playerX = clamp(mouseX - playerW / 2, 0, W - playerW);
+            } else {
+                if (keys.left) playerX -= PADDLE_SPEED;
+                if (keys.right) playerX += PADDLE_SPEED;
+                playerX = clamp(playerX, 0, W - playerW);
+            }
+
+            // ── AI paddle movement ──
+            var aiTarget = ballX - aiW / 2;
+            // Add imprecision based on ball speed and distance
+            var distFromAI = Math.abs(ballY - AI_Y);
+            var imprecision = AI_REACTION_NOISE * (1 - distFromAI / H);
+            aiTarget += (Math.sin(frame * 0.05) * imprecision);
+
+            // Smooth movement toward target — slower when ball is far away
+            var aiSpeedMult = AI_SPEED_FACTOR;
+            if (ballDY < 0) {
+                // Ball is coming toward AI — react faster
+                aiSpeedMult = 0.06;
+            } else {
+                // Ball going away — drift slowly back toward center
+                aiSpeedMult = 0.025;
+                aiTarget = W / 2 - aiW / 2 + (aiTarget - (W / 2 - aiW / 2)) * 0.3;
+            }
+
+            // Speed cap — AI can't move too fast per frame
+            var aiMaxMove = 4.5 + Math.min(ballSpeed * 0.15, 1.5);
+            var aiDiff = aiTarget - aiX;
+            var aiMove = aiDiff * aiSpeedMult;
+            aiMove = clamp(aiMove, -aiMaxMove, aiMaxMove);
+            aiX += aiMove;
+            aiX = clamp(aiX, 0, W - aiW);
+
+            // ── Ball trail ──
+            trail.push({ x: ballX, y: ballY });
+            if (trail.length > MAX_TRAIL) trail.shift();
+
+            // ── Ball movement ──
+            ballX += ballDX;
+            ballY += ballDY;
+
+            // ── Wall bounces ──
+            if (ballX - BALL_R <= 0) {
+                ballX = BALL_R;
+                ballDX = Math.abs(ballDX);
+            }
+            if (ballX + BALL_R >= W) {
+                ballX = W - BALL_R;
+                ballDX = -Math.abs(ballDX);
+            }
+
+            // ── Paddle collisions ──
+            // Player paddle (bottom)
+            if (ballDY > 0 && ballY + BALL_R >= PLAYER_Y && ballY + BALL_R <= PLAYER_Y + PADDLE_H + ballDY &&
+                ballX >= playerX - BALL_R * 0.5 && ballX <= playerX + playerW + BALL_R * 0.5) {
+
+                ballY = PLAYER_Y - BALL_R;
+                rallyCount++;
+
+                // Angle based on hit position
+                var hitPos = (ballX - playerX) / playerW; // 0 to 1
+                var angle = (hitPos - 0.5) * 2.5; // -1.25 to 1.25 radians range
+
+                ballSpeed = Math.min(ballSpeed + SPEED_INCREMENT, MAX_SPEED);
+                ballDX = Math.sin(angle) * ballSpeed;
+                ballDY = -Math.abs(Math.cos(angle) * ballSpeed);
+
+                // Ensure minimum vertical speed
+                if (Math.abs(ballDY) < ballSpeed * 0.3) {
+                    ballDY = -ballSpeed * 0.3;
+                    var remaining = Math.sqrt(ballSpeed * ballSpeed - ballDY * ballDY);
+                    ballDX = ballDX > 0 ? remaining : -remaining;
+                }
+
+                // Nice return toast for fast returns
+                if (ballSpeed >= 8 && rallyCount >= 3) {
+                    showToast('NICE! 🔥');
+                }
+            }
+
+            // AI paddle (top)
+            if (ballDY < 0 && ballY - BALL_R <= AI_Y + PADDLE_H && ballY - BALL_R >= AI_Y - Math.abs(ballDY) &&
+                ballX >= aiX - BALL_R * 0.5 && ballX <= aiX + aiW + BALL_R * 0.5) {
+
+                ballY = AI_Y + PADDLE_H + BALL_R;
+                rallyCount++;
+
+                var hitPos2 = (ballX - aiX) / aiW;
+                var angle2 = (hitPos2 - 0.5) * 2.0;
+
+                ballSpeed = Math.min(ballSpeed + SPEED_INCREMENT, MAX_SPEED);
+                ballDX = Math.sin(angle2) * ballSpeed;
+                ballDY = Math.abs(Math.cos(angle2) * ballSpeed);
+
+                if (Math.abs(ballDY) < ballSpeed * 0.3) {
+                    ballDY = ballSpeed * 0.3;
+                    var remaining2 = Math.sqrt(ballSpeed * ballSpeed - ballDY * ballDY);
+                    ballDX = ballDX > 0 ? remaining2 : -remaining2;
+                }
+            }
+
+            // ── Scoring ──
+            if (ballY - BALL_R > H) {
+                // AI scores
+                aiScore++;
+                lastScorer = 'ai';
+                state = POINT_SCORED;
+                pointPauseTimer = POINT_PAUSE_FRAMES;
+                return;
+            }
+            if (ballY + BALL_R < 0) {
+                // Player scores
+                playerScore++;
+                lastScorer = 'player';
+                state = POINT_SCORED;
+                pointPauseTimer = POINT_PAUSE_FRAMES;
+                return;
+            }
+
+            // ── Power-up spawning ──
+            powerupSpawnTimer++;
+            if (powerup === null && activePowerup === null && powerupSpawnTimer >= nextPowerupDelay) {
+                var pType = POWERUP_TYPES[powerupTypeIndex % POWERUP_TYPES.length];
+                powerupTypeIndex++;
+                powerup = {
+                    x: 80 + Math.random() * (W - 160),
+                    y: H / 3 + Math.random() * (H / 3),
+                    type: pType,
+                    timer: 300 // 5 seconds at 60fps
+                };
+                powerupSpawnTimer = 0;
+                nextPowerupDelay = randomPowerupDelay();
+            }
+
+            // ── Power-up countdown ──
+            if (powerup !== null) {
+                powerup.timer--;
+                if (powerup.timer <= 0) {
+                    powerup = null;
+                }
+            }
+
+            // ── Power-up collection (ball hits it) ──
+            if (powerup !== null) {
+                var pdx = ballX - powerup.x;
+                var pdy = ballY - powerup.y;
+                if (Math.sqrt(pdx * pdx + pdy * pdy) < BALL_R + 18) {
+                    activePowerup = {
+                        key: powerup.type.key,
+                        name: powerup.type.name,
+                        timer: powerup.type.key === 'speed' ? 180 : 300 // 3s for speed, 5s for others
+                    };
+                    showToast(powerup.type.emoji + ' ' + powerup.type.name + '!');
+
+                    // Apply power-up
+                    if (powerup.type.key === 'lobster') {
+                        playerW = 150;
+                        playerX = clamp(playerX, 0, W - playerW);
+                    } else if (powerup.type.key === 'mayo') {
+                        aiW = 60;
+                        aiX = clamp(aiX, 0, W - aiW);
+                    } else if (powerup.type.key === 'speed') {
+                        ballSpeed = Math.min(ballSpeed + 3, MAX_SPEED + 3);
+                        var currentMag = Math.sqrt(ballDX * ballDX + ballDY * ballDY);
+                        if (currentMag > 0) {
+                            ballDX = (ballDX / currentMag) * ballSpeed;
+                            ballDY = (ballDY / currentMag) * ballSpeed;
+                        }
+                    }
+                    powerup = null;
+                }
+            }
+
+            // ── Active power-up timer ──
+            if (activePowerup !== null) {
+                activePowerup.timer--;
+                if (activePowerup.timer <= 0) {
+                    // Revert power-up
+                    if (activePowerup.key === 'lobster') {
+                        playerW = PLAYER_PADDLE_W;
+                        playerX = clamp(playerX, 0, W - playerW);
+                    } else if (activePowerup.key === 'mayo') {
+                        aiW = AI_PADDLE_W;
+                        aiX = clamp(aiX, 0, W - aiW);
+                    } else if (activePowerup.key === 'speed') {
+                        ballSpeed = Math.max(ballSpeed - 3, BASE_SPEED);
+                        var currentMag2 = Math.sqrt(ballDX * ballDX + ballDY * ballDY);
+                        if (currentMag2 > 0) {
+                            ballDX = (ballDX / currentMag2) * ballSpeed;
+                            ballDY = (ballDY / currentMag2) * ballSpeed;
+                        }
+                    }
+                    activePowerup = null;
+                }
+            }
+        }
+
+        // ── Draw ──
+        function draw() {
+            // ── Background ──
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, W, H);
+
+            // ── Subtle grid ──
+            ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+            ctx.lineWidth = 1;
+            var gridSize = 30;
+            for (var gx = gridSize; gx < W; gx += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(gx, 0);
+                ctx.lineTo(gx, H);
+                ctx.stroke();
+            }
+            for (var gy = gridSize; gy < H; gy += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, gy);
+                ctx.lineTo(W, gy);
+                ctx.stroke();
+            }
+
+            // ── Center dashed line ──
+            ctx.setLineDash([10, 10]);
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, H / 2);
+            ctx.lineTo(W, H / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // ── Scores (large, centered in each half) ──
+            ctx.font = '800 72px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // AI score — top half
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
+            ctx.fillText(aiScore.toString(), W / 2, H / 4);
+
+            // Player score — bottom half
+            ctx.fillStyle = 'rgba(74, 222, 128, 0.12)';
+            ctx.fillText(playerScore.toString(), W / 2, H * 3 / 4);
+
+            // ── Power-up ──
+            if (powerup !== null) {
+                var bobY = Math.sin(frame * 0.08) * 5;
+                // Glow
+                ctx.shadowColor = '#4ade80';
+                ctx.shadowBlur = 20;
+                ctx.font = '28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(powerup.type.emoji, powerup.x, powerup.y + bobY);
+                ctx.shadowBlur = 0;
+
+                // Timer indicator (fading circle)
+                var pAlpha = Math.min(1, powerup.timer / 60);
+                ctx.beginPath();
+                ctx.arc(powerup.x, powerup.y + bobY, 22, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(74, 222, 128, ' + (pAlpha * 0.4) + ')';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // ── Ball trail ──
+            for (var t = 0; t < trail.length; t++) {
+                var tAlpha = (t / trail.length) * 0.3;
+                var tRadius = BALL_R * (t / trail.length) * 0.8;
+                ctx.beginPath();
+                ctx.arc(trail[t].x, trail[t].y, tRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(74, 222, 128, ' + tAlpha + ')';
+                ctx.fill();
+            }
+
+            // ── Ball ──
+            if (state === PLAYING || state === POINT_SCORED || state === MENU) {
+                // Green circle base
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, BALL_R, 0, Math.PI * 2);
+                ctx.fillStyle = '#4ade80';
+                ctx.fill();
+
+                // Cabbage emoji
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🥬', ballX, ballY);
+            }
+
+            // ── Player paddle ──
+            ctx.fillStyle = '#4ade80';
+            roundRect(playerX, PLAYER_Y, playerW, PADDLE_H, PADDLE_R);
+            ctx.fill();
+
+            // Lobster on player paddle
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🦞', playerX + playerW / 2, PLAYER_Y + PADDLE_H / 2);
+
+            // ── AI paddle ──
+            ctx.fillStyle = '#ef4444';
+            roundRect(aiX, AI_Y, aiW, PADDLE_H, PADDLE_R);
+            ctx.fill();
+
+            // Robot on AI paddle
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🤖', aiX + aiW / 2, AI_Y + PADDLE_H / 2);
+
+            // ── Win streak in corner ──
+            if (winStreak > 0) {
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.5)';
+                ctx.fillText('🔥 Streak: ' + winStreak, W - 12, 8);
+            }
+
+            // ── Active power-up indicator ──
+            if (activePowerup !== null) {
+                var secs = Math.ceil(activePowerup.timer / 60);
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.7)';
+                ctx.fillText(activePowerup.name + ' (' + secs + 's)', 12, 8);
+            }
+
+            // ── State overlays ──
+            if (state === MENU) {
+                drawMenuOverlay();
+            } else if (state === POINT_SCORED) {
+                drawPointScoredOverlay();
+            } else if (state === GAME_WON) {
+                drawGameWonOverlay();
+            }
+        }
+
+        function drawMenuOverlay() {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Title
+            ctx.font = '800 36px Inter, sans-serif';
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText('Slaw', W / 2 - 50, H / 2 - 110);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('Pong', W / 2 + 50, H / 2 - 110);
+
+            // Emoji
+            ctx.font = '48px sans-serif';
+            ctx.fillText('🏓', W / 2, H / 2 - 55);
+
+            // First to 7
+            ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('First to 7 wins', W / 2, H / 2);
+
+            // Power-up info
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('🦞 Lobster Boost   🥛 Mayo Slip   ⚡ Speed Slaw', W / 2, H / 2 + 35);
+
+            // Start prompt (bouncing)
+            var bounce = Math.sin(frame * 0.06) * 4;
+            ctx.font = '700 18px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('Press Space to Start', W / 2, H / 2 + 85 + bounce);
+
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('or tap / click', W / 2, H / 2 + 110 + bounce);
+
+            // Win streak
+            if (winStreak > 0) {
+                ctx.font = '600 14px Inter, sans-serif';
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.6)';
+                ctx.fillText('🔥 Win Streak: ' + winStreak, W / 2, H / 2 + 155);
+            }
+        }
+
+        function drawPointScoredOverlay() {
+            // Light flash overlay
+            var flashAlpha = Math.max(0, (pointPauseTimer - POINT_PAUSE_FRAMES + 15) / 15) * 0.15;
+            ctx.fillStyle = 'rgba(255,255,255,' + flashAlpha + ')';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.font = '800 28px Inter, sans-serif';
+            if (lastScorer === 'ai') {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText('AI Scores!', W / 2, H / 2 - 15);
+            } else {
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('You Score!', W / 2, H / 2 - 15);
+            }
+
+            // Score line
+            ctx.font = '600 20px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(playerScore + ' — ' + aiScore, W / 2, H / 2 + 20);
+        }
+
+        function drawGameWonOverlay() {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (winner === 'player') {
+                // Green celebration overlay
+                ctx.fillStyle = 'rgba(22, 163, 74, 0.15)';
+                ctx.fillRect(0, 0, W, H);
+
+                ctx.font = '800 48px Inter, sans-serif';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('YOU WIN!', W / 2, H / 2 - 60);
+
+                ctx.font = '36px sans-serif';
+                ctx.fillText('🎉', W / 2 - 50, H / 2 - 5);
+                ctx.fillText('🥬', W / 2 + 50, H / 2 - 5);
+
+                ctx.font = '600 20px Inter, sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(playerScore + ' — ' + aiScore, W / 2, H / 2 + 30);
+
+                ctx.font = '600 16px Inter, sans-serif';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('🔥 Win Streak: ' + winStreak, W / 2, H / 2 + 65);
+
+                var bounce2 = Math.sin(frame * 0.06) * 4;
+                ctx.font = '700 16px Inter, sans-serif';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('Press Space to Play Again', W / 2, H / 2 + 110 + bounce2);
+            } else {
+                // Red-tinted overlay
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                ctx.fillRect(0, 0, W, H);
+
+                ctx.font = '800 48px Inter, sans-serif';
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText('YOU LOSE', W / 2, H / 2 - 60);
+
+                ctx.font = '36px sans-serif';
+                ctx.fillText('🤖', W / 2 - 50, H / 2 - 5);
+                ctx.fillText('💀', W / 2 + 50, H / 2 - 5);
+
+                ctx.font = '600 20px Inter, sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(playerScore + ' — ' + aiScore, W / 2, H / 2 + 30);
+
+                ctx.font = '600 14px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Win streak reset', W / 2, H / 2 + 65);
+
+                var bounce3 = Math.sin(frame * 0.06) * 4;
+                ctx.font = '700 16px Inter, sans-serif';
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText('Press Space to Try Again', W / 2, H / 2 + 110 + bounce3);
+            }
+
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('or tap / click', W / 2, H / 2 + 135);
+        }
+
+        // ── Game loop ──
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // ── Initialize ──
+        resetBall(false);
+        ballDX = 0;
+        ballDY = 0;
+        loop();
+    })();
+    </script>
+</body>
+</html>
