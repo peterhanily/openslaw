@@ -1456,6 +1456,116 @@
             border: 1px solid var(--gray-200);
         }
 
+        .arcade-featured {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: linear-gradient(135deg, #0f172a 0%, #162032 50%, #0f172a 100%);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 1rem;
+            padding: 1.75rem 2rem;
+            margin-bottom: 1.75rem;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .arcade-featured::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(74, 222, 128, 0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .arcade-featured:hover {
+            border-color: rgba(74, 222, 128, 0.5);
+            box-shadow: 0 0 40px rgba(74, 222, 128, 0.12), 0 4px 20px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .arcade-featured-new {
+            position: absolute;
+            top: 0.85rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.2rem 0.65rem;
+            border-radius: 9999px;
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 12px rgba(74, 222, 128, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.7); }
+        }
+
+        .arcade-featured-icon {
+            font-size: 3.5rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .arcade-featured-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .arcade-featured-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #4ade80;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
+        }
+
+        .arcade-featured-desc {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-bottom: 0.6rem;
+        }
+
+        .arcade-featured-tags {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .arcade-featured-tags span {
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: rgba(74, 222, 128, 0.08);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+        }
+
+        .arcade-featured-play {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.55rem 1.25rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(22, 163, 74, 0.3);
+        }
+
+        .arcade-featured:hover .arcade-featured-play {
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.5);
+        }
+
         /* ── Built With ── */
         .built-with {
             margin-top: 1rem;
@@ -1544,6 +1654,24 @@
 
             .section {
                 padding: 3rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .arcade-featured {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem 1.25rem;
+                gap: 1rem;
+            }
+
+            .arcade-featured-tags {
+                justify-content: center;
+            }
+
+            .arcade-featured-new {
+                top: 0.6rem;
+                right: 0.75rem;
             }
         }
 
@@ -1856,7 +1984,7 @@
                         <li>On-prem deployment</li>
                         <li>Custom dressing endpoints</li>
                     </ul>
-                    <a href="mailto:hello@openslaw.ai" class="btn btn-secondary" style="width:100%;justify-content:center;">Contact Sales</a>
+                    <a href="mailto:openslaw@peterhanily.com" class="btn btn-secondary" style="width:100%;justify-content:center;">Contact Sales</a>
                 </div>
             </div>
         </div>
@@ -2048,6 +2176,22 @@
             <div class="section-label">Arcade</div>
             <h2 class="section-title">Slaw Labs</h2>
             <p class="section-subtitle">Break-time diversions from the OpenSlaw R&D department. All games are open-source and mayo-free.</p>
+
+            <a href="/slaw-doom.html" class="arcade-featured">
+                <span class="arcade-featured-new">New Release</span>
+                <div class="arcade-featured-icon">&#x1F99E;</div>
+                <div class="arcade-featured-body">
+                    <div class="arcade-featured-title">Slaw Doom</div>
+                    <div class="arcade-featured-desc">First-person raycasting shooter. Grab your lobster claws and purge 4 kitchen dungeons of mayo blobs, raisin swarms, pineapple chunks, and marshmallow mutants.</div>
+                    <div class="arcade-featured-tags">
+                        <span>FPS</span>
+                        <span>4 Levels</span>
+                        <span>4 Enemy Types</span>
+                        <span>Mouse + Keyboard</span>
+                    </div>
+                </div>
+                <div class="arcade-featured-play">Play Now &rarr;</div>
+            </a>
 
             <div class="arcade-grid">
                 <a href="/flappy-lobster.html" class="arcade-card">
