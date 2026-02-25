@@ -527,7 +527,7 @@
             upgradeList.innerHTML = '';
             for (var i = 0; i < upgrades.length; i++) {
                 var u = upgrades[i];
-                var owned = state.owned[u.id] || 0;
+                var owned = parseInt(state.owned[u.id], 10) || 0;
                 var cost = getCost(u);
                 var visible = state.totalShreds >= u.baseCost * 0.5;
 
