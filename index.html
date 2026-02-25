@@ -1663,7 +1663,7 @@
     <!-- Stats -->
     <div class="stats">
         <div class="stat">
-            <div class="stat-value">7</div>
+            <div class="stat-value">9</div>
             <div class="stat-label">Ingredients</div>
         </div>
         <div class="stat">
@@ -2265,11 +2265,13 @@
         });
 
         /* ── Toast ── */
+        var toastTimer = null;
         function showToast(message) {
             var toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(function() { toast.classList.remove('show'); }, 2500);
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
         }
 
         /* ── Serving Scaler ── */
@@ -2326,6 +2328,8 @@
                 'via OpenSlaw.ai';
             navigator.clipboard.writeText(text).then(function() {
                 showToast('Copied to clipboard!');
+            }).catch(function() {
+                showToast('Could not copy — try Ctrl+C');
             });
         }
 
@@ -2408,6 +2412,7 @@
                 showToast('Still just coleslaw.');
             } else if (logoClickCount >= 3) {
                 showToast('Keep clicking...');
+                logoClickTimer = setTimeout(function() { logoClickCount = 0; }, 2000);
             } else {
                 logoClickTimer = setTimeout(function() { logoClickCount = 0; }, 2000);
             }

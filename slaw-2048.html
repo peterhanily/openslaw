@@ -650,7 +650,11 @@
         document.addEventListener('touchstart', function(e) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-        }, { passive: true });
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
 
         document.addEventListener('touchend', function(e) {
             if (!e.changedTouches.length) return;
@@ -664,7 +668,7 @@
             } else {
                 move(dy > 0 ? 'down' : 'up');
             }
-        }, { passive: true });
+        }, { passive: false });
 
         // ── Buttons ──
         document.getElementById('new-game-btn').addEventListener('click', newGame);

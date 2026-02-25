@@ -561,6 +561,24 @@
             }
         }
 
+        // ── Update upgrade affordability in-place (no DOM rebuild) ──
+        function refreshUpgradeStates() {
+            var items = upgradeList.querySelectorAll('.upgrade-item');
+            for (var i = 0; i < items.length; i++) {
+                var id = items[i].getAttribute('data-id');
+                var upgrade = null;
+                for (var j = 0; j < upgrades.length; j++) {
+                    if (upgrades[j].id === id) { upgrade = upgrades[j]; break; }
+                }
+                if (!upgrade) continue;
+                var cost = getCost(upgrade);
+                var canAfford = state.shreds >= cost;
+                var costEl = items[i].querySelector('.upgrade-cost');
+                if (costEl) costEl.textContent = formatNum(cost);
+                items[i].className = 'upgrade-item' + (canAfford ? ' affordable' : ' disabled');
+            }
+        }
+
         // ── Buy upgrade ──
         function buyUpgrade(upgrade) {
             var cost = getCost(upgrade);
@@ -595,12 +613,12 @@
 
             checkMilestones();
             updateDisplay();
-            renderUpgrades();
+            refreshUpgradeStates();
         });
 
         // ── Update display ──
         function updateDisplay() {
-            statTotal.textContent = formatNum(state.shreds);
+            statTotal.textContent = formatNum(state.totalShreds);
             statPerSec.textContent = formatNum(getPerSec());
             statPerClick.textContent = formatNum(getPerClick());
         }
@@ -614,7 +632,7 @@
                 state.totalShreds += gain;
                 checkMilestones();
                 updateDisplay();
-                renderUpgrades();
+                refreshUpgradeStates();
             }
         }, 100);
 
