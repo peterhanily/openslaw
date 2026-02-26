@@ -82,8 +82,8 @@
 </head>
 <body>
     <div class="game-header">
-        <h1>🚀 Slaw <span>Command</span></h1>
-        <p>Defend your coleslaw cities from incoming mayo missiles.</p>
+        <h1>🦞 Slaw <span>Command</span></h1>
+        <p>Cybernetic AI lobsters defend against falling coleslaw.</p>
     </div>
     <div class="game-container">
         <canvas id="game" width="600" height="400"></canvas>
@@ -103,7 +103,8 @@
         var H = canvas.height;
 
         // ── State machine ──
-        var STATE_MENU = 0, STATE_PLAYING = 1, STATE_WAVE_COMPLETE = 2, STATE_DEAD = 3;
+        var STATE_MENU = 0, STATE_WAVE_INTRO = 1, STATE_PLAYING = 2,
+            STATE_WAVE_BONUS = 3, STATE_DEAD = 4;
         var state = STATE_MENU;
 
         // ── Scores & tracking ──
@@ -112,12 +113,17 @@
         var wave = 1;
         var frame = 0;
         var deathFrame = 0;
-        var waveCompleteFrame = 0;
-        var ammo = 15;
-        var AMMO_PER_WAVE = 15;
+        var waveIntroFrame = 0;
+        var waveBonusFrame = 0;
+        var bonusCityPts = 0;
+        var bonusAmmoPts = 0;
+        var bonusTotalPts = 0;
 
         // ── Toasts ──
         var toasts = [];
+
+        // ── Screen flash ──
+        var screenFlash = 0;
 
         // ── Stars background ──
         var stars = [];
@@ -130,40 +136,82 @@
             });
         }
 
-        // ── Ground line ──
+        // ── Ground ──
         var GROUND_Y = H - 40;
 
-        // ── Cities (6 coleslaw bowls) ──
-        var cities = [];
+        // Generate jagged ground line
+        var groundPoints = [];
+        (function() {
+            for (var gx = 0; gx <= W; gx += 8) {
+                groundPoints.push({
+                    x: gx,
+                    y: GROUND_Y + (Math.random() - 0.5) * 4
+                });
+            }
+        })();
+
+        // ═══════════════════════════════
+        //   CITY & BATTERY NAMES + POSITIONS
+        // ═══════════════════════════════
+
+        var CITY_NAMES = [
+            'CLAW-01', 'PINCER-7', 'SHELL-X',
+            'CHITIN-3', 'ANTENNA-9', 'CARAPACE-K'
+        ];
         var CITY_COUNT = 6;
 
-        function initCities() {
-            cities = [];
-            var spacing = W / (CITY_COUNT + 1);
-            for (var i = 0; i < CITY_COUNT; i++) {
-                cities.push({
-                    x: spacing * (i + 1),
-                    y: GROUND_Y + 5,
-                    alive: true
+        var BATTERY_NAMES = ['Port Claw', 'Neural Array', 'Starboard Claw'];
+        var BATTERY_SPEEDS = [4, 6, 4]; // center is faster
+        var AMMO_PER_BATTERY = 10;
+
+        // Layout: Bat0 - City0 City1 City2 - Bat1 - City3 City4 City5 - Bat2
+        var BATTERY_X = [W * 0.10, W * 0.50, W * 0.90];
+        var CITY_X = [W * 0.22, W * 0.33, W * 0.42, W * 0.58, W * 0.67, W * 0.78];
+
+        var batteries = [];
+        var cities = [];
+
+        function initBatteries() {
+            batteries = [];
+            for (var i = 0; i < 3; i++) {
+                batteries.push({
+                    x: BATTERY_X[i],
+                    y: GROUND_Y - 2,
+                    ammo: AMMO_PER_BATTERY,
+                    alive: true,
+                    name: BATTERY_NAMES[i],
+                    speed: BATTERY_SPEEDS[i]
                 });
             }
         }
 
-        // ── Battery (center turret) ──
-        var battery = { x: W / 2, y: GROUND_Y - 2 };
+        function initCities() {
+            cities = [];
+            for (var i = 0; i < CITY_COUNT; i++) {
+                cities.push({
+                    x: CITY_X[i],
+                    y: GROUND_Y + 5,
+                    alive: true,
+                    name: CITY_NAMES[i]
+                });
+            }
+        }
 
         // ── Player counter-missiles ──
         var counterMissiles = [];
 
         // ── Explosions ──
         var explosions = [];
-        var EXPLOSION_MAX_RADIUS = 40;
-        var EXPLOSION_GROW_SPEED = 2;
-        var EXPLOSION_HOLD = 8;
-        var EXPLOSION_SHRINK_SPEED = 2;
+        var EXPLOSION_MAX_RADIUS = 38;
+        var EXPLOSION_GROW_SPEED = 1.8;
+        var EXPLOSION_HOLD = 10;
+        var EXPLOSION_SHRINK_SPEED = 1.5;
 
         // ── Enemy missiles ──
         var enemyMissiles = [];
+
+        // ── Bombers ──
+        var bombers = [];
 
         // ── Particles ──
         var particles = [];
@@ -173,9 +221,49 @@
         var waveMissilesSpawned = 0;
         var waveSpawnTimer = 0;
         var waveSpawnInterval = 60;
+        var waveBomberCount = 0;
+        var waveBombersSpawned = 0;
+        var waveBomberTimer = 0;
+
+        // ── Crosshair ──
+        var mouseX = W / 2;
+        var mouseY = H / 2;
 
         // ═══════════════════════════════
-        //   HELPER: roundRect
+        //   WAVE INTRO DATA
+        // ═══════════════════════════════
+
+        var WAVE_INTROS = [
+            { title: 'COLESLAW INBOUND', sub: 'The first bowls are falling. Lobsters, engage claws.' },
+            { title: 'DOUBLE DOLLOP', sub: "They're dropping more slaw from above." },
+            { title: 'THE RAISINS APPROACH', sub: 'Who puts raisins in a weapon of war?' },
+            { title: 'SUPPLY CHAIN ATTACK', sub: "They've weaponized the vinegar." },
+            { title: 'PINEAPPLE OFFENSIVE', sub: 'Tropical coleslaw variant detected. Lobsters hold firm.' },
+            { title: 'RANCH INCURSION', sub: "They're trying to rebrand our lobsters as seafood salad." }
+        ];
+
+        var WAVE7_TITLES = ['MIRACLE WHIP PROTOCOL', 'CONDIMENT CONVERGENCE', 'FINAL DOLLOP'];
+        var WAVE7_SUBS = [
+            'The forbidden sauce approaches.',
+            'All coleslaw united against lobster-kind.',
+            'Cyber-claws at maximum power.',
+            'They brought the squeeze bottles.',
+            'Carapace integrity holding... barely.',
+            "We didn't start the slaw fire."
+        ];
+
+        function getWaveIntro(w) {
+            if (w <= WAVE_INTROS.length) {
+                return WAVE_INTROS[w - 1];
+            }
+            return {
+                title: WAVE7_TITLES[(w - 7) % WAVE7_TITLES.length],
+                sub: WAVE7_SUBS[Math.floor(Math.random() * WAVE7_SUBS.length)]
+            };
+        }
+
+        // ═══════════════════════════════
+        //   HELPERS
         // ═══════════════════════════════
 
         function roundRect(x, y, w, h, r) {
@@ -197,6 +285,15 @@
             }
         }
 
+        function getMultiplier() {
+            return Math.floor((wave - 1) / 2) + 1;
+        }
+
+        function dist(x1, y1, x2, y2) {
+            var dx = x1 - x2, dy = y1 - y2;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         // ═══════════════════════════════
         //   TOAST SYSTEM
         // ═══════════════════════════════
@@ -209,9 +306,7 @@
             for (var i = toasts.length - 1; i >= 0; i--) {
                 toasts[i].life--;
                 toasts[i].y -= 0.6;
-                if (toasts[i].life <= 0) {
-                    toasts.splice(i, 1);
-                }
+                if (toasts[i].life <= 0) toasts.splice(i, 1);
             }
         }
 
@@ -238,8 +333,7 @@
                 var angle = Math.random() * Math.PI * 2;
                 var speed = 0.5 + Math.random() * 2;
                 particles.push({
-                    x: x,
-                    y: y,
+                    x: x, y: y,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     life: 20 + Math.floor(Math.random() * 20),
@@ -255,9 +349,7 @@
                 p.x += p.vx;
                 p.y += p.vy;
                 p.life--;
-                if (p.life <= 0) {
-                    particles.splice(i, 1);
-                }
+                if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
@@ -296,19 +388,39 @@
                 ctx.restore();
             }
 
-            // Ground
+            // Scanlines (subtle CRT feel)
+            ctx.save();
+            ctx.globalAlpha = 0.03;
+            ctx.fillStyle = '#000';
+            for (var sy = 0; sy < H; sy += 3) {
+                ctx.fillRect(0, sy, W, 1);
+            }
+            ctx.restore();
+
+            // Jagged ground
             ctx.fillStyle = '#1e293b';
-            ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+            ctx.beginPath();
+            ctx.moveTo(0, H);
+            for (var g = 0; g < groundPoints.length; g++) {
+                ctx.lineTo(groundPoints[g].x, groundPoints[g].y);
+            }
+            ctx.lineTo(W, H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ground edge line
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(0, GROUND_Y);
-            ctx.lineTo(W, GROUND_Y);
+            for (var g2 = 0; g2 < groundPoints.length; g2++) {
+                if (g2 === 0) ctx.moveTo(groundPoints[g2].x, groundPoints[g2].y);
+                else ctx.lineTo(groundPoints[g2].x, groundPoints[g2].y);
+            }
             ctx.stroke();
         }
 
         // ═══════════════════════════════
-        //   DRAWING: Cities (coleslaw bowls)
+        //   DRAWING: Cities
         // ═══════════════════════════════
 
         function drawCities() {
@@ -318,42 +430,115 @@
                 var cy = c.y;
 
                 if (c.alive) {
-                    // Bowl shape
-                    ctx.fillStyle = '#166534';
+                    // Cybernetic AI Lobster
+                    var bob = Math.sin(frame * 0.04 + i * 1.5) * 1.5;
+                    var ly = cy - 2 + bob;
+
+                    // Body (red-orange)
+                    ctx.fillStyle = '#ef4444';
                     ctx.beginPath();
-                    ctx.ellipse(cx, cy + 2, 14, 8, 0, 0, Math.PI);
+                    ctx.ellipse(cx, ly, 10, 6, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Bowl rim
-                    ctx.strokeStyle = '#4ade80';
-                    ctx.lineWidth = 2;
+                    // Tail segments
+                    ctx.fillStyle = '#dc2626';
                     ctx.beginPath();
-                    ctx.ellipse(cx, cy - 2, 16, 6, 0, 0, Math.PI, true);
+                    ctx.ellipse(cx, ly + 7, 6, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(cx, ly + 10, 4, 2, 0, 0, Math.PI);
+                    ctx.fill();
+
+                    // Claws
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.ellipse(cx - 14, ly - 3, 5, 3, -0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(cx + 14, ly - 3, 5, 3, 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Claw pincers
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(cx - 18, ly - 4, 3, -0.5, 1.5);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(cx + 18, ly - 4, 3, 1.6, 3.6);
                     ctx.stroke();
 
-                    // Coleslaw filling
+                    // Cybernetic eyes (glowing green)
                     ctx.fillStyle = '#4ade80';
+                    ctx.shadowColor = '#4ade80';
+                    ctx.shadowBlur = 4;
                     ctx.beginPath();
-                    ctx.ellipse(cx, cy - 2, 13, 4, 0, 0, Math.PI * 2);
+                    ctx.arc(cx - 4, ly - 5, 2, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(cx + 4, ly - 5, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
 
-                    // Highlight
-                    ctx.fillStyle = 'rgba(74, 222, 128, 0.3)';
+                    // Circuit lines on body
+                    ctx.strokeStyle = '#4ade80';
+                    ctx.lineWidth = 0.7;
+                    ctx.globalAlpha = 0.4 + 0.2 * Math.sin(frame * 0.08 + i);
                     ctx.beginPath();
-                    ctx.ellipse(cx - 4, cy - 4, 5, 2, -0.3, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    // Destroyed city — darkened rubble
-                    ctx.fillStyle = '#1e293b';
+                    ctx.moveTo(cx - 7, ly); ctx.lineTo(cx + 7, ly);
+                    ctx.stroke();
                     ctx.beginPath();
-                    ctx.ellipse(cx, cy + 2, 14, 6, 0, 0, Math.PI);
-                    ctx.fill();
+                    ctx.moveTo(cx, ly - 4); ctx.lineTo(cx, ly + 4);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
 
-                    ctx.strokeStyle = '#334155';
+                    // Antennae
+                    ctx.strokeStyle = '#94a3b8';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    ctx.ellipse(cx, cy - 1, 14, 4, 0, 0, Math.PI * 2);
+                    ctx.moveTo(cx - 3, ly - 6);
+                    ctx.lineTo(cx - 6, ly - 12);
                     ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(cx + 3, ly - 6);
+                    ctx.lineTo(cx + 6, ly - 12);
+                    ctx.stroke();
+                    // Antenna tips glow
+                    ctx.fillStyle = '#4ade80';
+                    ctx.beginPath();
+                    ctx.arc(cx - 6, ly - 12, 1, 0, Math.PI * 2);
+                    ctx.arc(cx + 6, ly - 12, 1, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Callsign label
+                    ctx.font = '600 7px Inter, sans-serif';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(c.name, cx, cy + 18);
+                } else {
+                    // Destroyed lobster — sparking wreckage
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.ellipse(cx, cy, 10, 5, 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Broken claw fragments
+                    ctx.fillStyle = '#7f1d1d';
+                    ctx.beginPath();
+                    ctx.ellipse(cx - 8, cy + 2, 3, 2, 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(cx + 10, cy + 1, 3, 2, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Sparking circuit (intermittent)
+                    if (Math.sin(frame * 0.15 + i * 2) > 0.3) {
+                        ctx.fillStyle = '#4ade80';
+                        ctx.globalAlpha = 0.3;
+                        ctx.beginPath();
+                        ctx.arc(cx + (i % 2 ? -3 : 3), cy - 3, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                    }
 
                     // Smoke wisps
                     var smokeAlpha = 0.15 + 0.1 * Math.sin(frame * 0.05 + i);
@@ -367,121 +552,173 @@
                     ctx.arc(cx + 4, cy - 10 - Math.sin(frame * 0.04 + i + 1) * 2, 2, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.restore();
+
+                    // Dimmed callsign
+                    ctx.font = '600 7px Inter, sans-serif';
+                    ctx.fillStyle = '#334155';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(c.name, cx, cy + 18);
                 }
             }
         }
 
         // ═══════════════════════════════
-        //   DRAWING: Battery (turret)
+        //   DRAWING: Batteries (3 bunkers)
         // ═══════════════════════════════
 
-        function drawBattery() {
-            var bx = battery.x;
-            var by = battery.y;
+        function drawBatteries() {
+            for (var i = 0; i < batteries.length; i++) {
+                var b = batteries[i];
+                var bx = b.x;
+                var by = b.y;
 
-            // Base platform
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(bx - 18, by - 2, 36, 8);
+                if (b.alive) {
+                    // Bunker base
+                    ctx.fillStyle = '#334155';
+                    ctx.beginPath();
+                    ctx.moveTo(bx - 16, by + 4);
+                    ctx.lineTo(bx - 20, by + 4);
+                    ctx.lineTo(bx - 14, by - 6);
+                    ctx.lineTo(bx + 14, by - 6);
+                    ctx.lineTo(bx + 20, by + 4);
+                    ctx.lineTo(bx + 16, by + 4);
+                    ctx.closePath();
+                    ctx.fill();
 
-            // Turret triangle
-            ctx.fillStyle = '#4ade80';
-            ctx.beginPath();
-            ctx.moveTo(bx, by - 14);
-            ctx.lineTo(bx - 10, by - 2);
-            ctx.lineTo(bx + 10, by - 2);
-            ctx.closePath();
-            ctx.fill();
+                    // Turret triangle
+                    ctx.fillStyle = i === 1 ? '#facc15' : '#4ade80';
+                    ctx.beginPath();
+                    ctx.moveTo(bx, by - 16);
+                    ctx.lineTo(bx - 8, by - 6);
+                    ctx.lineTo(bx + 8, by - 6);
+                    ctx.closePath();
+                    ctx.fill();
 
-            // Turret glow
-            ctx.save();
-            ctx.globalAlpha = 0.3 + 0.1 * Math.sin(frame * 0.08);
-            ctx.fillStyle = '#4ade80';
-            ctx.beginPath();
-            ctx.arc(bx, by - 8, 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+                    // Turret glow
+                    ctx.save();
+                    ctx.globalAlpha = 0.3 + 0.1 * Math.sin(frame * 0.08 + i);
+                    ctx.fillStyle = i === 1 ? '#facc15' : '#4ade80';
+                    ctx.beginPath();
+                    ctx.arc(bx, by - 10, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Ammo count below
+                    ctx.font = '700 9px Inter, sans-serif';
+                    ctx.fillStyle = b.ammo > 3 ? '#4ade80' : (b.ammo > 0 ? '#facc15' : '#ef4444');
+                    ctx.textAlign = 'center';
+                    ctx.fillText(b.ammo, bx, by + 16);
+                } else {
+                    // Destroyed battery — rubble
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.moveTo(bx - 18, by + 4);
+                    ctx.lineTo(bx - 10, by - 2);
+                    ctx.lineTo(bx + 10, by - 2);
+                    ctx.lineTo(bx + 18, by + 4);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#334155';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
         }
 
         // ═══════════════════════════════
         //   ENEMY MISSILES
         // ═══════════════════════════════
 
-        function spawnEnemyMissile(type) {
-            // Pick a random alive city as target
-            var aliveCities = [];
+        function getTargets() {
+            // Returns all valid targets (alive cities + alive batteries)
+            var targets = [];
             for (var i = 0; i < cities.length; i++) {
-                if (cities[i].alive) aliveCities.push(i);
+                if (cities[i].alive) targets.push({ type: 'city', idx: i, x: cities[i].x, y: cities[i].y });
             }
-            if (aliveCities.length === 0) return;
+            for (var j = 0; j < batteries.length; j++) {
+                if (batteries[j].alive) targets.push({ type: 'battery', idx: j, x: batteries[j].x, y: batteries[j].y });
+            }
+            return targets;
+        }
 
-            var targetIdx = aliveCities[Math.floor(Math.random() * aliveCities.length)];
-            var target = cities[targetIdx];
+        function spawnEnemyMissile(type) {
+            var targets = getTargets();
+            var cityTargets = [];
+            for (var i = 0; i < targets.length; i++) {
+                if (targets[i].type === 'city') cityTargets.push(targets[i]);
+            }
+            // Prefer city targets, but can also target batteries
+            var pool = cityTargets.length > 0 ? cityTargets : targets;
+            if (pool.length === 0) return;
+
+            var target = pool[Math.floor(Math.random() * pool.length)];
 
             var startX = 30 + Math.random() * (W - 60);
             var startY = -5;
 
             var dx = target.x - startX;
             var dy = target.y - startY;
-            var dist = Math.sqrt(dx * dx + dy * dy);
+            var d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 1) d = 1;
 
-            var baseSpeed = 0.6 + wave * 0.08;
+            var baseSpeed = 0.5 + wave * 0.07;
 
             var missile = {
-                x: startX,
-                y: startY,
-                startX: startX,
-                startY: startY,
-                targetX: target.x,
-                targetY: target.y,
-                targetCityIdx: targetIdx,
-                type: type, // 'mayo', 'raisin', 'pineapple'
+                x: startX, y: startY,
+                startX: startX, startY: startY,
+                targetX: target.x, targetY: target.y,
+                targetType: target.type,
+                targetIdx: target.idx,
+                type: type,
                 speed: baseSpeed,
-                vx: (dx / dist) * baseSpeed,
-                vy: (dy / dist) * baseSpeed,
-                trail: [],
+                vx: (dx / d) * baseSpeed,
+                vy: (dy / d) * baseSpeed,
                 alive: true,
                 splitDone: false
             };
 
             if (type === 'pineapple') {
                 missile.speed = baseSpeed * 1.4;
-                missile.vx = (dx / dist) * missile.speed;
-                missile.vy = (dy / dist) * missile.speed;
+                missile.vx = (dx / d) * missile.speed;
+                missile.vy = (dy / d) * missile.speed;
+            } else if (type === 'smart') {
+                missile.speed = baseSpeed * 0.9;
+                missile.vx = (dx / d) * missile.speed;
+                missile.vy = (dy / d) * missile.speed;
             }
 
             enemyMissiles.push(missile);
         }
 
         function spawnChildMissile(parent) {
-            var aliveCities = [];
-            for (var i = 0; i < cities.length; i++) {
-                if (cities[i].alive) aliveCities.push(i);
+            var targets = getTargets();
+            var cityTargets = [];
+            for (var i = 0; i < targets.length; i++) {
+                if (targets[i].type === 'city') cityTargets.push(targets[i]);
             }
-            if (aliveCities.length === 0) return;
+            var pool = cityTargets.length > 0 ? cityTargets : targets;
+            if (pool.length === 0) return null;
 
-            var targetIdx = aliveCities[Math.floor(Math.random() * aliveCities.length)];
-            var target = cities[targetIdx];
+            var target = pool[Math.floor(Math.random() * pool.length)];
 
             var dx = target.x - parent.x;
             var dy = target.y - parent.y;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 1) dist = 1;
+            var d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 1) d = 1;
 
             var speed = parent.speed * 0.9;
 
             return {
-                x: parent.x,
-                y: parent.y,
-                startX: parent.x,
-                startY: parent.y,
-                targetX: target.x,
-                targetY: target.y,
-                targetCityIdx: targetIdx,
+                x: parent.x, y: parent.y,
+                startX: parent.x, startY: parent.y,
+                targetX: target.x, targetY: target.y,
+                targetType: target.type,
+                targetIdx: target.idx,
                 type: 'raisin_child',
                 speed: speed,
-                vx: (dx / dist) * speed,
-                vy: (dy / dist) * speed,
-                trail: [],
+                vx: (dx / d) * speed,
+                vy: (dy / d) * speed,
                 alive: true,
                 splitDone: true
             };
@@ -495,12 +732,29 @@
                     continue;
                 }
 
+                // Smart missiles: curve away from nearby explosions
+                if (m.type === 'smart') {
+                    for (var ei = 0; ei < explosions.length; ei++) {
+                        var ex = explosions[ei];
+                        var edist = dist(m.x, m.y, ex.x, ex.y);
+                        if (edist < ex.radius + 60 && edist > 5) {
+                            // Push away from explosion
+                            var pushX = (m.x - ex.x) / edist * 0.3;
+                            var pushY = (m.y - ex.y) / edist * 0.15;
+                            m.vx += pushX;
+                            m.vy += pushY;
+                            // Re-normalize to maintain speed
+                            var spd = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+                            if (spd > 0) {
+                                m.vx = (m.vx / spd) * m.speed;
+                                m.vy = Math.abs((m.vy / spd) * m.speed); // Keep going down
+                            }
+                        }
+                    }
+                }
+
                 m.x += m.vx;
                 m.y += m.vy;
-
-                // Store trail
-                m.trail.push({ x: m.x, y: m.y });
-                if (m.trail.length > 30) m.trail.shift();
 
                 // Raisin split check
                 if (m.type === 'raisin' && !m.splitDone && m.y > H * 0.35 + Math.random() * H * 0.15) {
@@ -514,15 +768,29 @@
                     spawnParticles(m.x, m.y, 6, '#a855f7');
                 }
 
-                // Check if reached target city
-                var tdx = m.x - m.targetX;
-                var tdy = m.y - m.targetY;
-                if (Math.sqrt(tdx * tdx + tdy * tdy) < 10) {
-                    // Hit the city
-                    if (cities[m.targetCityIdx].alive) {
-                        cities[m.targetCityIdx].alive = false;
-                        spawnParticles(m.targetX, m.targetY, 15, '#ef4444');
-                        addToast('City destroyed!', m.targetX, m.targetY - 20, '#ef4444');
+                // Check if reached target
+                var tdist = dist(m.x, m.y, m.targetX, m.targetY);
+                if (tdist < 10) {
+                    // Enemy impact explosion — classic Missile Command burst at target
+                    explosions.push({
+                        x: m.targetX, y: m.targetY,
+                        radius: 0, maxRadius: EXPLOSION_MAX_RADIUS * 0.7,
+                        phase: 'grow', holdTimer: 6
+                    });
+                    if (m.targetType === 'city') {
+                        if (cities[m.targetIdx].alive) {
+                            cities[m.targetIdx].alive = false;
+                            spawnParticles(m.targetX, m.targetY, 15, '#ef4444');
+                            addToast(cities[m.targetIdx].name + ' down!', m.targetX, m.targetY - 20, '#ef4444');
+                            screenFlash = 8;
+                        }
+                    } else if (m.targetType === 'battery') {
+                        if (batteries[m.targetIdx].alive) {
+                            batteries[m.targetIdx].alive = false;
+                            spawnParticles(m.targetX, m.targetY, 12, '#ef4444');
+                            addToast(batteries[m.targetIdx].name + ' hit!', m.targetX, m.targetY - 20, '#ef4444');
+                            screenFlash = 6;
+                        }
                     }
                     m.alive = false;
                     continue;
@@ -535,42 +803,40 @@
             }
         }
 
+        function getEnemyTrailColor(type) {
+            if (type === 'mayo') return '#f1f5f9';
+            if (type === 'raisin' || type === 'raisin_child') return '#a855f7';
+            if (type === 'pineapple') return '#facc15';
+            if (type === 'smart') return '#f472b6';
+            return '#f1f5f9';
+        }
+
         function drawEnemyMissiles() {
             for (var i = 0; i < enemyMissiles.length; i++) {
                 var m = enemyMissiles[i];
                 if (!m.alive) continue;
 
-                // Draw trail
-                if (m.trail.length > 1) {
-                    var trailColor;
-                    if (m.type === 'mayo') trailColor = 'rgba(255,255,255,';
-                    else if (m.type === 'raisin' || m.type === 'raisin_child') trailColor = 'rgba(168,85,247,';
-                    else if (m.type === 'pineapple') trailColor = 'rgba(250,204,21,';
-                    else trailColor = 'rgba(255,255,255,';
+                var color = getEnemyTrailColor(m.type);
 
-                    for (var j = 1; j < m.trail.length; j++) {
-                        var alpha = j / m.trail.length * 0.4;
-                        ctx.strokeStyle = trailColor + alpha + ')';
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
-                        ctx.moveTo(m.trail[j - 1].x, m.trail[j - 1].y);
-                        ctx.lineTo(m.trail[j].x, m.trail[j].y);
-                        ctx.stroke();
-                    }
-                }
+                // Persistent trail: solid line from start to current pos
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath();
+                ctx.moveTo(m.startX, Math.max(0, m.startY));
+                ctx.lineTo(m.x, m.y);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
 
-                // Draw missile head
+                // Missile head
                 var radius = 3;
-                if (m.type === 'mayo') {
-                    ctx.fillStyle = '#f1f5f9';
-                    radius = 3;
-                } else if (m.type === 'raisin' || m.type === 'raisin_child') {
+                if (m.type === 'mayo') { ctx.fillStyle = '#f1f5f9'; radius = 3; }
+                else if (m.type === 'raisin' || m.type === 'raisin_child') {
                     ctx.fillStyle = '#a855f7';
                     radius = m.type === 'raisin' ? 4 : 2.5;
-                } else if (m.type === 'pineapple') {
-                    ctx.fillStyle = '#facc15';
-                    radius = 4;
                 }
+                else if (m.type === 'pineapple') { ctx.fillStyle = '#facc15'; radius = 4; }
+                else if (m.type === 'smart') { ctx.fillStyle = '#f472b6'; radius = 3.5; }
 
                 ctx.beginPath();
                 ctx.arc(m.x, m.y, radius, 0, Math.PI * 2);
@@ -587,29 +853,147 @@
         }
 
         // ═══════════════════════════════
+        //   MAYO BOMBERS (wave 4+)
+        // ═══════════════════════════════
+
+        function spawnBomber() {
+            var fromLeft = Math.random() < 0.5;
+            var bY = 30 + Math.random() * 50;
+            bombers.push({
+                x: fromLeft ? -30 : W + 30,
+                y: bY,
+                vx: fromLeft ? (0.8 + Math.random() * 0.5) : -(0.8 + Math.random() * 0.5),
+                alive: true,
+                dropTimer: 60 + Math.floor(Math.random() * 40),
+                dropCooldown: 80 + Math.floor(Math.random() * 30)
+            });
+        }
+
+        function updateBombers() {
+            for (var i = bombers.length - 1; i >= 0; i--) {
+                var b = bombers[i];
+                if (!b.alive) { bombers.splice(i, 1); continue; }
+
+                b.x += b.vx;
+
+                // Drop missiles periodically
+                b.dropTimer--;
+                if (b.dropTimer <= 0) {
+                    b.dropTimer = b.dropCooldown;
+                    // Drop a mayo missile from bomber position
+                    var targets = getTargets();
+                    var cityTargets = [];
+                    for (var t = 0; t < targets.length; t++) {
+                        if (targets[t].type === 'city') cityTargets.push(targets[t]);
+                    }
+                    if (cityTargets.length > 0) {
+                        var target = cityTargets[Math.floor(Math.random() * cityTargets.length)];
+                        var dx = target.x - b.x;
+                        var dy = target.y - b.y;
+                        var d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < 1) d = 1;
+                        var spd = 0.8 + wave * 0.05;
+                        enemyMissiles.push({
+                            x: b.x, y: b.y,
+                            startX: b.x, startY: b.y,
+                            targetX: target.x, targetY: target.y,
+                            targetType: target.type, targetIdx: target.idx,
+                            type: 'mayo',
+                            speed: spd,
+                            vx: (dx / d) * spd, vy: (dy / d) * spd,
+                            alive: true, splitDone: true
+                        });
+                    }
+                }
+
+                // Off screen
+                if ((b.vx > 0 && b.x > W + 50) || (b.vx < 0 && b.x < -50)) {
+                    b.alive = false;
+                }
+            }
+        }
+
+        function drawBombers() {
+            for (var i = 0; i < bombers.length; i++) {
+                var b = bombers[i];
+                if (!b.alive) continue;
+
+                var bx = b.x, by = b.y;
+                var facing = b.vx > 0 ? 1 : -1;
+
+                // Fuselage
+                ctx.fillStyle = '#f1f5f9';
+                ctx.beginPath();
+                ctx.ellipse(bx, by, 16, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Wings
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(bx - 4 * facing, by - 2);
+                ctx.lineTo(bx - 12 * facing, by - 10);
+                ctx.lineTo(bx + 4 * facing, by - 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(bx - 14 * facing, by - 1);
+                ctx.lineTo(bx - 20 * facing, by - 7);
+                ctx.lineTo(bx - 12 * facing, by - 1);
+                ctx.closePath();
+                ctx.fill();
+
+                // MAYO label
+                ctx.font = '700 6px Inter, sans-serif';
+                ctx.fillStyle = '#ef4444';
+                ctx.textAlign = 'center';
+                ctx.fillText('SLAW', bx, by + 3);
+            }
+        }
+
+        // ═══════════════════════════════
         //   COUNTER-MISSILES (PLAYER)
         // ═══════════════════════════════
 
+        function findNearestBattery(targetX, targetY) {
+            var best = -1;
+            var bestDist = Infinity;
+            for (var i = 0; i < batteries.length; i++) {
+                if (!batteries[i].alive || batteries[i].ammo <= 0) continue;
+                var d = dist(batteries[i].x, batteries[i].y, targetX, targetY);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+            return best;
+        }
+
         function fireCounterMissile(targetX, targetY) {
-            if (ammo <= 0) return;
-            if (targetY > GROUND_Y - 20) return; // Don't fire at ground level
+            if (targetY > GROUND_Y - 20) return;
 
-            ammo--;
+            var batIdx = findNearestBattery(targetX, targetY);
+            if (batIdx < 0) return;
 
-            var dx = targetX - battery.x;
-            var dy = targetY - battery.y;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 1) dist = 1;
+            var bat = batteries[batIdx];
+            bat.ammo--;
 
-            var speed = 5;
+            var dx = targetX - bat.x;
+            var dy = targetY - (bat.y - 16);
+            var d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 1) d = 1;
+
+            var speed = bat.speed;
             counterMissiles.push({
-                x: battery.x,
-                y: battery.y - 14,
+                x: bat.x,
+                y: bat.y - 16,
+                startX: bat.x,
+                startY: bat.y - 16,
                 targetX: targetX,
                 targetY: targetY,
-                vx: (dx / dist) * speed,
-                vy: (dy / dist) * speed,
-                trail: [],
+                vx: (dx / d) * speed,
+                vy: (dy / d) * speed,
                 alive: true
             });
         }
@@ -617,30 +1001,18 @@
         function updateCounterMissiles() {
             for (var i = counterMissiles.length - 1; i >= 0; i--) {
                 var m = counterMissiles[i];
-                if (!m.alive) {
-                    counterMissiles.splice(i, 1);
-                    continue;
-                }
+                if (!m.alive) { counterMissiles.splice(i, 1); continue; }
 
                 m.x += m.vx;
                 m.y += m.vy;
 
-                m.trail.push({ x: m.x, y: m.y });
-                if (m.trail.length > 20) m.trail.shift();
-
                 // Check if reached target
-                var dx = m.x - m.targetX;
-                var dy = m.y - m.targetY;
-                if (Math.sqrt(dx * dx + dy * dy) < 6) {
+                if (dist(m.x, m.y, m.targetX, m.targetY) < 6) {
                     m.alive = false;
-                    // Create explosion
                     explosions.push({
-                        x: m.targetX,
-                        y: m.targetY,
-                        radius: 0,
-                        maxRadius: EXPLOSION_MAX_RADIUS,
-                        phase: 'grow', // grow, hold, shrink
-                        holdTimer: EXPLOSION_HOLD
+                        x: m.targetX, y: m.targetY,
+                        radius: 0, maxRadius: EXPLOSION_MAX_RADIUS,
+                        phase: 'grow', holdTimer: EXPLOSION_HOLD
                     });
                 }
             }
@@ -651,18 +1023,26 @@
                 var m = counterMissiles[i];
                 if (!m.alive) continue;
 
-                // Trail
-                if (m.trail.length > 1) {
-                    for (var j = 1; j < m.trail.length; j++) {
-                        var alpha = j / m.trail.length * 0.7;
-                        ctx.strokeStyle = 'rgba(74, 222, 128, ' + alpha + ')';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(m.trail[j - 1].x, m.trail[j - 1].y);
-                        ctx.lineTo(m.trail[j].x, m.trail[j].y);
-                        ctx.stroke();
-                    }
-                }
+                // Target marker (X) at destination — classic Missile Command style
+                ctx.strokeStyle = '#4ade80';
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.6;
+                var tx = m.targetX, ty = m.targetY;
+                ctx.beginPath();
+                ctx.moveTo(tx - 5, ty - 5); ctx.lineTo(tx + 5, ty + 5);
+                ctx.moveTo(tx + 5, ty - 5); ctx.lineTo(tx - 5, ty + 5);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+
+                // Persistent trail: bright green line from battery to current pos
+                ctx.strokeStyle = '#4ade80';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(m.startX, m.startY);
+                ctx.lineTo(m.x, m.y);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
 
                 // Missile head
                 ctx.fillStyle = '#4ade80';
@@ -682,7 +1062,7 @@
         }
 
         // ═══════════════════════════════
-        //   EXPLOSIONS
+        //   EXPLOSIONS (multi-color)
         // ═══════════════════════════════
 
         function updateExplosions() {
@@ -697,9 +1077,7 @@
                     }
                 } else if (e.phase === 'hold') {
                     e.holdTimer--;
-                    if (e.holdTimer <= 0) {
-                        e.phase = 'shrink';
-                    }
+                    if (e.holdTimer <= 0) e.phase = 'shrink';
                 } else if (e.phase === 'shrink') {
                     e.radius -= EXPLOSION_SHRINK_SPEED;
                     if (e.radius <= 0) {
@@ -713,29 +1091,34 @@
                     var m = enemyMissiles[j];
                     if (!m.alive) continue;
 
-                    var dx = m.x - e.x;
-                    var dy = m.y - e.y;
-                    var dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist < e.radius) {
+                    if (dist(m.x, m.y, e.x, e.y) < e.radius) {
                         m.alive = false;
-                        spawnParticles(m.x, m.y, 8, getEnemyColor(m.type));
+                        spawnParticles(m.x, m.y, 8, getEnemyTrailColor(m.type));
 
                         var pts = getPoints(m.type);
                         score += pts;
-                        addToast('+' + pts, m.x, m.y - 10, getEnemyColor(m.type));
+                        addToast('+' + pts, m.x, m.y - 10, getEnemyTrailColor(m.type));
 
-                        // Chain explosion for more spectacle
+                        // Chain explosion
                         if (m.type !== 'raisin_child') {
                             explosions.push({
-                                x: m.x,
-                                y: m.y,
-                                radius: 0,
-                                maxRadius: EXPLOSION_MAX_RADIUS * 0.5,
-                                phase: 'grow',
-                                holdTimer: 4
+                                x: m.x, y: m.y,
+                                radius: 0, maxRadius: EXPLOSION_MAX_RADIUS * 0.5,
+                                phase: 'grow', holdTimer: 4
                             });
                         }
+                    }
+                }
+
+                // Check collision with bombers
+                for (var k = 0; k < bombers.length; k++) {
+                    var bm = bombers[k];
+                    if (!bm.alive) continue;
+                    if (dist(bm.x, bm.y, e.x, e.y) < e.radius + 12) {
+                        bm.alive = false;
+                        spawnParticles(bm.x, bm.y, 15, '#f1f5f9');
+                        score += 500;
+                        addToast('+500 BOMBER', bm.x, bm.y - 15, '#f1f5f9');
                     }
                 }
             }
@@ -746,53 +1129,44 @@
             if (type === 'raisin') return 150;
             if (type === 'raisin_child') return 50;
             if (type === 'pineapple') return 200;
+            if (type === 'smart') return 300;
             return 100;
-        }
-
-        function getEnemyColor(type) {
-            if (type === 'mayo') return '#f1f5f9';
-            if (type === 'raisin' || type === 'raisin_child') return '#a855f7';
-            if (type === 'pineapple') return '#facc15';
-            return '#f1f5f9';
         }
 
         function drawExplosions() {
             for (var i = 0; i < explosions.length; i++) {
                 var e = explosions[i];
+                var progress = e.radius / e.maxRadius;
 
                 var alpha;
-                if (e.phase === 'grow') {
-                    alpha = 0.6;
-                } else if (e.phase === 'hold') {
-                    alpha = 0.5;
-                } else {
-                    alpha = (e.radius / e.maxRadius) * 0.5;
-                }
+                if (e.phase === 'grow') alpha = 0.7;
+                else if (e.phase === 'hold') alpha = 0.6;
+                else alpha = (e.radius / e.maxRadius) * 0.5;
 
-                // Outer glow
+                // Outer ring — orange
                 ctx.save();
-                ctx.globalAlpha = alpha * 0.3;
-                ctx.fillStyle = '#4ade80';
+                ctx.globalAlpha = alpha * 0.4;
+                ctx.fillStyle = '#f97316';
                 ctx.beginPath();
-                ctx.arc(e.x, e.y, e.radius + 6, 0, Math.PI * 2);
+                ctx.arc(e.x, e.y, e.radius + 4, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
 
-                // Main explosion circle
+                // Middle — yellow
                 ctx.save();
-                ctx.globalAlpha = alpha;
-                ctx.fillStyle = '#4ade80';
+                ctx.globalAlpha = alpha * 0.7;
+                ctx.fillStyle = '#facc15';
                 ctx.beginPath();
-                ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                ctx.arc(e.x, e.y, e.radius * 0.75, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
 
-                // Bright center
+                // Core — white
                 ctx.save();
-                ctx.globalAlpha = alpha * 0.8;
-                ctx.fillStyle = '#bbf7d0';
+                ctx.globalAlpha = alpha * 0.9;
+                ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(e.x, e.y, e.radius * 0.4, 0, Math.PI * 2);
+                ctx.arc(e.x, e.y, e.radius * 0.35, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
@@ -803,21 +1177,39 @@
         // ═══════════════════════════════
 
         function drawHUD() {
-            ctx.font = '600 13px Inter, sans-serif';
+            ctx.font = '600 12px Inter, sans-serif';
 
             // Top-left: Wave and Score
             ctx.textAlign = 'left';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Wave: ' + wave, 12, 22);
+            ctx.fillText('WAVE ' + wave, 12, 20);
             ctx.fillStyle = '#e2e8f0';
-            ctx.fillText('Score: ' + score, 12, 40);
+            ctx.font = '700 14px Inter, sans-serif';
+            ctx.fillText(score, 12, 38);
 
-            // Top-right: Ammo and High Score
-            ctx.textAlign = 'right';
+            // Top-center: Ammo per battery
+            ctx.textAlign = 'center';
+            ctx.font = '600 11px Inter, sans-serif';
+
+            var ammoStr = 'PC:' + (batteries[0].alive ? batteries[0].ammo : 'X');
+            ammoStr += '  NA:' + (batteries[1].alive ? batteries[1].ammo : 'X');
+            ammoStr += '  SC:' + (batteries[2].alive ? batteries[2].ammo : 'X');
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Ammo: ' + ammo, W - 12, 22);
+            ctx.fillText(ammoStr, W / 2, 20);
+
+            // Multiplier indicator
+            var mult = getMultiplier();
+            if (mult > 1) {
+                ctx.font = '700 11px Inter, sans-serif';
+                ctx.fillStyle = '#facc15';
+                ctx.fillText(mult + 'x BONUS', W / 2, 34);
+            }
+
+            // Top-right: High Score
+            ctx.textAlign = 'right';
+            ctx.font = '600 11px Inter, sans-serif';
             ctx.fillStyle = '#64748b';
-            ctx.fillText('HI: ' + highScore, W - 12, 40);
+            ctx.fillText('HI: ' + highScore, W - 12, 20);
         }
 
         // ═══════════════════════════════
@@ -832,21 +1224,41 @@
             return Math.max(20, 60 - wave * 4);
         }
 
+        function getWaveBomberCount() {
+            if (wave < 4) return 0;
+            return Math.min(wave - 3, 4);
+        }
+
+        function startWaveIntro() {
+            state = STATE_WAVE_INTRO;
+            waveIntroFrame = 0;
+        }
+
         function startWave() {
             waveMissileCount = getWaveMissileCount();
             waveMissilesSpawned = 0;
             waveSpawnTimer = 0;
             waveSpawnInterval = getSpawnInterval();
-            ammo = AMMO_PER_WAVE + Math.floor(wave * 0.5);
+            waveBomberCount = getWaveBomberCount();
+            waveBombersSpawned = 0;
+            waveBomberTimer = 90;
+
+            // Refill batteries (rebuilt each wave, like classic)
+            for (var i = 0; i < batteries.length; i++) {
+                batteries[i].alive = true;
+                batteries[i].ammo = AMMO_PER_BATTERY;
+            }
+
             state = STATE_PLAYING;
         }
 
         function spawnWaveMissile() {
-            // Decide type
             var type = 'mayo';
             var roll = Math.random();
 
-            if (wave >= 5 && roll < 0.2) {
+            if (wave >= 7 && roll < 0.15) {
+                type = 'smart';
+            } else if (wave >= 5 && roll < 0.25) {
                 type = 'pineapple';
             } else if (wave >= 3 && roll < 0.35) {
                 type = 'raisin';
@@ -857,8 +1269,11 @@
         }
 
         function checkWaveComplete() {
-            if (waveMissilesSpawned >= waveMissileCount && enemyMissiles.length === 0 && explosions.length === 0) {
-                // Wave complete — check if any cities alive
+            if (waveMissilesSpawned >= waveMissileCount &&
+                enemyMissiles.length === 0 &&
+                explosions.length === 0 &&
+                bombers.length === 0) {
+                // Check if any cities alive
                 var anyAlive = false;
                 for (var i = 0; i < cities.length; i++) {
                     if (cities[i].alive) { anyAlive = true; break; }
@@ -866,14 +1281,24 @@
                 if (!anyAlive) {
                     triggerGameOver();
                 } else {
-                    state = STATE_WAVE_COMPLETE;
-                    waveCompleteFrame = 0;
+                    // Calculate bonus
+                    var mult = getMultiplier();
+                    bonusCityPts = 0;
+                    bonusAmmoPts = 0;
+                    for (var j = 0; j < cities.length; j++) {
+                        if (cities[j].alive) bonusCityPts += 100 * mult;
+                    }
+                    for (var k = 0; k < batteries.length; k++) {
+                        if (batteries[k].alive) bonusAmmoPts += batteries[k].ammo * 5 * mult;
+                    }
+                    bonusTotalPts = bonusCityPts + bonusAmmoPts;
 
-                    // Save high score
+                    state = STATE_WAVE_BONUS;
+                    waveBonusFrame = 0;
+
                     if (score > highScore) {
                         highScore = score;
                         localStorage.setItem('slaw-command-high', String(highScore));
-                        addToast('New high score!', W / 2, H / 2 - 40, '#facc15');
                     }
                 }
             }
@@ -884,19 +1309,15 @@
             for (var i = 0; i < cities.length; i++) {
                 if (cities[i].alive) { anyAlive = true; break; }
             }
-            if (!anyAlive) {
-                triggerGameOver();
-            }
+            if (!anyAlive) triggerGameOver();
         }
 
         function triggerGameOver() {
             state = STATE_DEAD;
             deathFrame = 0;
-
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('slaw-command-high', String(highScore));
-                addToast('New high score!', W / 2, H / 2 - 60, '#facc15');
             }
         }
 
@@ -912,8 +1333,11 @@
             explosions = [];
             particles = [];
             toasts = [];
+            bombers = [];
+            screenFlash = 0;
+            initBatteries();
             initCities();
-            startWave();
+            startWaveIntro();
         }
 
         // ═══════════════════════════════
@@ -927,176 +1351,297 @@
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.fillRect(0, 0, W, H);
 
-            // Title — measure to center the two-color text
-            ctx.font = '800 32px Inter, sans-serif';
-            var titlePart1 = 'Slaw ';
-            var titlePart2 = 'Command';
-            var t1w = ctx.measureText(titlePart1).width;
-            var t2w = ctx.measureText(titlePart2).width;
-            var totalW = t1w + t2w;
-            var titleX = (W - totalW) / 2;
+            // Title
+            ctx.font = '800 36px Inter, sans-serif';
+            var t1 = 'SLAW ';
+            var t2 = 'COMMAND';
+            var t1w = ctx.measureText(t1).width;
+            var t2w = ctx.measureText(t2).width;
+            var titleX = (W - t1w - t2w) / 2;
             ctx.textAlign = 'left';
             ctx.fillStyle = '#e2e8f0';
-            ctx.fillText(titlePart1, titleX, H * 0.22);
+            ctx.fillText(t1, titleX, H * 0.16);
             ctx.fillStyle = '#4ade80';
-            ctx.fillText(titlePart2, titleX + t1w, H * 0.22);
+            ctx.fillText(t2, titleX + t1w, H * 0.16);
+
+            // Subtitle
             ctx.textAlign = 'center';
+            ctx.font = '600 13px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('CYBERNETIC LOBSTERS VS. FALLING COLESLAW', W / 2, H * 0.23);
+
+            // Preview: draw 3 batteries + 6 cities (small)
+            var previewY = H * 0.32;
+            ctx.save();
+            for (var bi = 0; bi < 3; bi++) {
+                var bx = BATTERY_X[bi];
+                // Mini bunker
+                ctx.fillStyle = '#334155';
+                ctx.beginPath();
+                ctx.moveTo(bx - 8, previewY + 2);
+                ctx.lineTo(bx - 6, previewY - 4);
+                ctx.lineTo(bx + 6, previewY - 4);
+                ctx.lineTo(bx + 8, previewY + 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = bi === 1 ? '#facc15' : '#4ade80';
+                ctx.beginPath();
+                ctx.moveTo(bx, previewY - 9);
+                ctx.lineTo(bx - 4, previewY - 4);
+                ctx.lineTo(bx + 4, previewY - 4);
+                ctx.closePath();
+                ctx.fill();
+            }
+            for (var ci = 0; ci < 6; ci++) {
+                var ccx = CITY_X[ci];
+                // Mini lobster
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.ellipse(ccx, previewY, 6, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Mini claws
+                ctx.beginPath();
+                ctx.arc(ccx - 8, previewY - 1, 2, 0, Math.PI * 2);
+                ctx.arc(ccx + 8, previewY - 1, 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Cyber eyes
+                ctx.fillStyle = '#4ade80';
+                ctx.beginPath();
+                ctx.arc(ccx - 2, previewY - 2, 1, 0, Math.PI * 2);
+                ctx.arc(ccx + 2, previewY - 2, 1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = '600 6px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'center';
+                ctx.fillText(CITY_NAMES[ci], ccx, previewY + 12);
+            }
+            ctx.restore();
+
+            // Enemy types legend
+            var infoY = H * 0.48;
+            var lineH = 20;
+            ctx.textAlign = 'center';
+
+            ctx.font = '700 11px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('— ENEMY INTEL —', W / 2, infoY);
+
+            infoY += lineH + 2;
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillText('Mayo Slaw Bombs — 100 pts — "The classic white menace"', W / 2, infoY);
+
+            infoY += lineH;
+            ctx.fillStyle = '#a855f7';
+            ctx.fillText('Raisin Slaw MIRVs (wave 3+) — 150 pts — "They split!"', W / 2, infoY);
+
+            infoY += lineH;
+            ctx.fillStyle = '#facc15';
+            ctx.fillText('Pineapple Slaw (wave 5+) — 200 pts — "Fast & tropical"', W / 2, infoY);
+
+            infoY += lineH;
+            ctx.fillStyle = '#f472b6';
+            ctx.fillText('Miracle Whip Cruise (wave 7+) — 300 pts — "Dodge-capable"', W / 2, infoY);
+
+            infoY += lineH;
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillText('Slaw Bombers (wave 4+) — 500 pts — "Airborne delivery"', W / 2, infoY);
+
+            // Start prompt
+            var bounce = Math.sin(frame * 0.06) * 4;
+            ctx.font = '800 16px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('PRESS SPACE TO DEPLOY LOBSTERS', W / 2, H * 0.87 + bounce);
+
+            ctx.font = '400 10px Inter, sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText('or click/tap anywhere', W / 2, H * 0.87 + bounce + 16);
+
+            // High score
+            if (highScore > 0) {
+                ctx.font = '700 12px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('HIGH SCORE: ' + highScore, W / 2, H * 0.96);
+            }
+        }
+
+        function drawWaveIntroScreen() {
+            drawBackground();
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.80)';
+            ctx.fillRect(0, 0, W, H);
+
+            var intro = getWaveIntro(wave);
+
+            // Wave number
+            ctx.textAlign = 'center';
+            ctx.font = '600 14px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('WAVE ' + wave, W / 2, H * 0.34);
+
+            // Title
+            ctx.font = '800 28px Inter, sans-serif';
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText(intro.title, W / 2, H * 0.46);
+
+            // Subtitle
+            ctx.font = '400 14px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(intro.sub, W / 2, H * 0.56);
+
+            // Multiplier
+            var mult = getMultiplier();
+            if (mult > 1) {
+                ctx.font = '700 13px Inter, sans-serif';
+                ctx.fillStyle = '#facc15';
+                ctx.fillText('BONUS MULTIPLIER: ' + mult + 'x', W / 2, H * 0.66);
+            }
+        }
+
+        function drawWaveBonusScreen() {
+            drawBackground();
+
+            // Draw cities in place so player sees what survived
+            drawCities();
+            drawBatteries();
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.textAlign = 'center';
+
+            // Title
+            ctx.font = '800 26px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText('BONUS SHREDS', W / 2, H * 0.18);
+
+            var mult = getMultiplier();
+            ctx.font = '600 12px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Wave ' + wave + ' Complete — ' + mult + 'x Multiplier', W / 2, H * 0.26);
+
+            // Surviving cities
+            var cityY = H * 0.35;
+            ctx.font = '700 11px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('SURVIVING LOBSTERS', W / 2, cityY);
+
+            cityY += 18;
+            var animProgress = Math.min(waveBonusFrame / 60, 1); // count-up over ~1 sec
+            var cityCount = 0;
+            for (var i = 0; i < cities.length; i++) {
+                if (cities[i].alive) cityCount++;
+            }
+
+            // Draw each surviving city name
+            var aliveNames = [];
+            for (var j = 0; j < cities.length; j++) {
+                if (cities[j].alive) aliveNames.push(cities[j].name);
+            }
+            if (aliveNames.length > 0) {
+                ctx.font = '600 10px Inter, sans-serif';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText(aliveNames.join('  •  '), W / 2, cityY);
+            } else {
+                ctx.font = '600 10px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('No lobsters survived', W / 2, cityY);
+            }
+
+            cityY += 22;
+            var displayedCityPts = Math.floor(bonusCityPts * animProgress);
+            ctx.font = '700 14px Inter, sans-serif';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(cityCount + ' lobsters × ' + (100 * mult) + ' = ' + displayedCityPts + ' pts', W / 2, cityY);
+
+            // Remaining ammo
+            cityY += 30;
+            ctx.font = '700 11px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('REMAINING AMMO', W / 2, cityY);
+
+            cityY += 18;
+            var totalAmmo = 0;
+            for (var k = 0; k < batteries.length; k++) {
+                if (batteries[k].alive) totalAmmo += batteries[k].ammo;
+            }
+            var displayedAmmoPts = Math.floor(bonusAmmoPts * animProgress);
+            ctx.font = '700 14px Inter, sans-serif';
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(totalAmmo + ' missiles × ' + (5 * mult) + ' = ' + displayedAmmoPts + ' pts', W / 2, cityY);
+
+            // Total bonus
+            cityY += 32;
+            var displayedTotal = Math.floor(bonusTotalPts * animProgress);
+            ctx.font = '800 18px Inter, sans-serif';
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText('TOTAL BONUS: ' + displayedTotal, W / 2, cityY);
+
+            // "Next wave" prompt after animation
+            if (waveBonusFrame > 120) {
+                var bounce = Math.sin(frame * 0.06) * 3;
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('Next wave incoming...', W / 2, H * 0.88 + bounce);
+            }
+        }
+
+        function drawGameOverScreen() {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.textAlign = 'center';
+
+            // Big dramatic title
+            ctx.font = '800 34px Inter, sans-serif';
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('THE LOBSTERS HAVE BEEN SLAWED', W / 2, H * 0.30);
 
             // Subtitle
             ctx.font = '400 13px Inter, sans-serif';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Defend your coleslaw cities from incoming condiment attacks', W / 2, H * 0.30);
+            ctx.fillText('All cybernetic lobsters have been dressed.', W / 2, H * 0.38);
 
-            // Enemy types info
-            var infoY = H * 0.40;
-            var lineH = 26;
-
-            ctx.font = '600 13px Inter, sans-serif';
-            ctx.fillStyle = '#64748b';
-            ctx.fillText('— ENEMY TYPES —', W / 2, infoY);
-
-            infoY += lineH + 4;
-            ctx.fillStyle = '#f1f5f9';
-            ctx.fillText('Mayo Missiles — 100 pts', W / 2, infoY);
-
-            infoY += lineH;
-            ctx.fillStyle = '#a855f7';
-            ctx.fillText('Raisin Clusters (wave 3+) — 150 pts (splits!)', W / 2, infoY);
-
-            infoY += lineH;
-            ctx.fillStyle = '#facc15';
-            ctx.fillText('Pineapple Bombs (wave 5+) — 200 pts (fast!)', W / 2, infoY);
-
-            // Bouncing start prompt
-            var bounce = Math.sin(frame * 0.06) * 4;
+            // Stats
             ctx.font = '700 16px Inter, sans-serif';
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText('Press Space to Start', W / 2, H * 0.78 + bounce);
-
-            // Click also works
-            ctx.font = '400 11px Inter, sans-serif';
-            ctx.fillStyle = '#475569';
-            ctx.fillText('or click/tap anywhere', W / 2, H * 0.78 + bounce + 20);
-
-            // High score
-            if (highScore > 0) {
-                ctx.font = '600 12px Inter, sans-serif';
-                ctx.fillStyle = '#64748b';
-                ctx.fillText('High Score: ' + highScore, W / 2, H * 0.93);
-            }
-        }
-
-        function drawWaveCompleteScreen() {
-            // Wave complete overlay
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.textAlign = 'center';
-            ctx.font = '800 28px Inter, sans-serif';
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText('Wave ' + wave + ' Complete!', W / 2, H * 0.38);
-
-            // Count alive cities
-            var alive = 0;
-            for (var i = 0; i < cities.length; i++) {
-                if (cities[i].alive) alive++;
-            }
-
-            ctx.font = '600 14px Inter, sans-serif';
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Cities remaining: ' + alive + '/' + CITY_COUNT, W / 2, H * 0.48);
-
-            ctx.font = '600 14px Inter, sans-serif';
             ctx.fillStyle = '#e2e8f0';
-            ctx.fillText('Score: ' + score, W / 2, H * 0.56);
+            ctx.fillText('Final Score: ' + score, W / 2, H * 0.50);
 
-            var bounce = Math.sin(frame * 0.06) * 3;
-            ctx.font = '600 13px Inter, sans-serif';
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText('Next wave incoming...', W / 2, H * 0.67 + bounce);
-        }
-
-        function drawGameOverScreen() {
-            // Semi-transparent overlay
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-            ctx.fillRect(0, 0, W, H);
-
-            // Card
-            var cardW = 260;
-            var cardH = 180;
-            var cardX = W / 2 - cardW / 2;
-            var cardY = H / 2 - cardH / 2;
-
-            // Card shadow
-            ctx.save();
-            ctx.globalAlpha = 0.3;
-            ctx.fillStyle = '#000';
-            roundRect(cardX + 3, cardY + 3, cardW, cardH, 12);
-            ctx.fill();
-            ctx.restore();
-
-            // Card background
-            ctx.fillStyle = '#1e293b';
-            roundRect(cardX, cardY, cardW, cardH, 12);
-            ctx.fill();
-
-            // Card border
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 1;
-            roundRect(cardX, cardY, cardW, cardH, 12);
-            ctx.stroke();
-
-            // Red header stripe
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(cardX + 12, cardY);
-            ctx.lineTo(cardX + cardW - 12, cardY);
-            ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + 12);
-            ctx.lineTo(cardX + cardW, cardY + 36);
-            ctx.lineTo(cardX, cardY + 36);
-            ctx.lineTo(cardX, cardY + 12);
-            ctx.quadraticCurveTo(cardX, cardY, cardX + 12, cardY);
-            ctx.closePath();
-            ctx.fillStyle = '#7f1d1d';
-            ctx.fill();
-            ctx.restore();
-
-            // GAME OVER text
-            ctx.textAlign = 'center';
-            ctx.font = '800 18px Inter, sans-serif';
-            ctx.fillStyle = '#ef4444';
-            ctx.fillText('GAME OVER', W / 2, cardY + 25);
-
-            // Final score
-            ctx.font = '600 15px Inter, sans-serif';
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillText('Final Score: ' + score, W / 2, cardY + 68);
-
-            // Wave reached
             ctx.font = '600 13px Inter, sans-serif';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Wave Reached: ' + wave, W / 2, cardY + 92);
+            ctx.fillText('Wave Reached: ' + wave, W / 2, H * 0.57);
 
-            // High score
-            ctx.font = '600 12px Inter, sans-serif';
+            ctx.font = '700 13px Inter, sans-serif';
             ctx.fillStyle = '#64748b';
-            ctx.fillText('High Score: ' + highScore, W / 2, cardY + 116);
+            ctx.fillText('High Score: ' + highScore, W / 2, H * 0.63);
+
+            // New high score flash
+            if (score >= highScore && score > 0) {
+                var flashAlpha = 0.5 + 0.5 * Math.sin(frame * 0.1);
+                ctx.save();
+                ctx.globalAlpha = flashAlpha;
+                ctx.font = '800 14px Inter, sans-serif';
+                ctx.fillStyle = '#facc15';
+                ctx.fillText('★ NEW HIGH SCORE ★', W / 2, H * 0.70);
+                ctx.restore();
+            }
 
             // Retry prompt
-            if (deathFrame > 40) {
-                var bounce = Math.sin(frame * 0.06) * 3;
-                ctx.font = '700 14px Inter, sans-serif';
+            if (deathFrame > 50) {
+                var bounce = Math.sin(frame * 0.06) * 4;
+                ctx.font = '800 15px Inter, sans-serif';
                 ctx.fillStyle = '#4ade80';
-                ctx.fillText('Press Space to Retry', W / 2, cardY + 155 + bounce);
+                ctx.fillText('PRESS SPACE TO REBOOT LOBSTERS', W / 2, H * 0.82 + bounce);
+
+                ctx.font = '400 10px Inter, sans-serif';
+                ctx.fillStyle = '#475569';
+                ctx.fillText('or click/tap', W / 2, H * 0.82 + bounce + 18);
             }
         }
 
         // ═══════════════════════════════
         //   CROSSHAIR
         // ═══════════════════════════════
-
-        var mouseX = W / 2;
-        var mouseY = H / 2;
 
         function drawCrosshair() {
             if (state !== STATE_PLAYING) return;
@@ -1106,7 +1651,6 @@
             ctx.strokeStyle = '#4ade80';
             ctx.lineWidth = 1;
 
-            // Crosshair
             var size = 8;
             ctx.beginPath();
             ctx.moveTo(mouseX - size, mouseY);
@@ -1117,7 +1661,6 @@
             ctx.lineTo(mouseX, mouseY + size);
             ctx.stroke();
 
-            // Circle
             ctx.beginPath();
             ctx.arc(mouseX, mouseY, size + 2, 0, Math.PI * 2);
             ctx.stroke();
@@ -1126,11 +1669,26 @@
         }
 
         // ═══════════════════════════════
+        //   SCREEN FLASH
+        // ═══════════════════════════════
+
+        function drawScreenFlash() {
+            if (screenFlash > 0) {
+                ctx.save();
+                ctx.globalAlpha = screenFlash * 0.04;
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, W, H);
+                ctx.restore();
+            }
+        }
+
+        // ═══════════════════════════════
         //   UPDATE & DRAW
         // ═══════════════════════════════
 
         function update() {
             frame++;
+            if (screenFlash > 0) screenFlash--;
 
             if (state === STATE_PLAYING) {
                 // Spawn enemy missiles
@@ -1142,27 +1700,48 @@
                     }
                 }
 
+                // Spawn bombers
+                if (waveBombersSpawned < waveBomberCount) {
+                    waveBomberTimer--;
+                    if (waveBomberTimer <= 0) {
+                        spawnBomber();
+                        waveBombersSpawned++;
+                        waveBomberTimer = 120 + Math.floor(Math.random() * 60);
+                    }
+                }
+
                 updateCounterMissiles();
                 updateEnemyMissiles();
+                updateBombers();
                 updateExplosions();
                 updateParticles();
                 updateToasts();
 
-                // Check game over
                 checkGameOver();
+                if (state === STATE_PLAYING) checkWaveComplete();
 
-                // Check wave complete
-                if (state === STATE_PLAYING) {
-                    checkWaveComplete();
+            } else if (state === STATE_WAVE_INTRO) {
+                waveIntroFrame++;
+                if (waveIntroFrame > 120) { // ~2 seconds
+                    startWave();
                 }
-            } else if (state === STATE_WAVE_COMPLETE) {
-                waveCompleteFrame++;
+            } else if (state === STATE_WAVE_BONUS) {
+                waveBonusFrame++;
                 updateParticles();
                 updateToasts();
 
-                if (waveCompleteFrame > 120) {
+                // Award bonus points gradually
+                if (waveBonusFrame === 60) {
+                    score += bonusTotalPts;
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('slaw-command-high', String(highScore));
+                    }
+                }
+
+                if (waveBonusFrame > 180) {
                     wave++;
-                    startWave();
+                    startWaveIntro();
                 }
             } else if (state === STATE_DEAD) {
                 deathFrame++;
@@ -1174,26 +1753,33 @@
         }
 
         function draw() {
-            drawBackground();
-
             if (state === STATE_MENU) {
                 drawMenuScreen();
                 return;
             }
 
+            if (state === STATE_WAVE_INTRO) {
+                drawWaveIntroScreen();
+                return;
+            }
+
+            drawBackground();
+
             // Draw game elements
             drawCities();
-            drawBattery();
+            drawBatteries();
             drawEnemyMissiles();
             drawCounterMissiles();
+            drawBombers();
             drawExplosions();
             drawParticles();
             drawCrosshair();
             drawHUD();
             drawToasts();
+            drawScreenFlash();
 
-            if (state === STATE_WAVE_COMPLETE) {
-                drawWaveCompleteScreen();
+            if (state === STATE_WAVE_BONUS) {
+                drawWaveBonusScreen();
             } else if (state === STATE_DEAD) {
                 drawGameOverScreen();
             }
@@ -1223,19 +1809,9 @@
             e.preventDefault();
             var pos = getCanvasPos(e.clientX, e.clientY);
 
-            if (state === STATE_MENU) {
-                startGame();
-                return;
-            }
-
-            if (state === STATE_DEAD && deathFrame > 40) {
-                startGame();
-                return;
-            }
-
-            if (state === STATE_PLAYING) {
-                fireCounterMissile(pos.x, pos.y);
-            }
+            if (state === STATE_MENU) { startGame(); return; }
+            if (state === STATE_DEAD && deathFrame > 50) { startGame(); return; }
+            if (state === STATE_PLAYING) { fireCounterMissile(pos.x, pos.y); }
         });
 
         canvas.addEventListener('touchstart', function(e) {
@@ -1245,31 +1821,17 @@
                 mouseX = pos.x;
                 mouseY = pos.y;
 
-                if (state === STATE_MENU) {
-                    startGame();
-                    return;
-                }
-
-                if (state === STATE_DEAD && deathFrame > 40) {
-                    startGame();
-                    return;
-                }
-
-                if (state === STATE_PLAYING) {
-                    fireCounterMissile(pos.x, pos.y);
-                }
+                if (state === STATE_MENU) { startGame(); return; }
+                if (state === STATE_DEAD && deathFrame > 50) { startGame(); return; }
+                if (state === STATE_PLAYING) { fireCounterMissile(pos.x, pos.y); }
             }
         }, { passive: false });
 
         document.addEventListener('keydown', function(e) {
             if (e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
-
-                if (state === STATE_MENU) {
-                    startGame();
-                } else if (state === STATE_DEAD && deathFrame > 40) {
-                    startGame();
-                }
+                if (state === STATE_MENU) startGame();
+                else if (state === STATE_DEAD && deathFrame > 50) startGame();
             }
         });
 
@@ -1283,6 +1845,7 @@
             requestAnimationFrame(loop);
         }
 
+        initBatteries();
         initCities();
         loop();
     })();

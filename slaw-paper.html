@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scaling Laws for Cabbage Shredding — OpenSlaw.ai Research</title>
+    <meta name="description" content="A Unified Framework for Agentic Slaw Intelligence. arXiv preprint [slaw.AI] 2026.02.26">
+    <meta property="og:title" content="Scaling Laws for Cabbage Shredding — OpenSlaw.ai Research">
+    <meta property="og:description" content="A Unified Framework for Agentic Slaw Intelligence">
+    <meta property="og:image" content="https://openslaw.ai/og-image.png">
+    <meta property="og:url" content="https://openslaw.ai/slaw-paper.html">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f172a;
+            color: #1e293b;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            font-size: 16px;
+            line-height: 1.75;
+            min-height: 100vh;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #4ade80;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            max-width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .paper {
+            max-width: 750px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 3rem 3.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 800px) {
+            .paper { padding: 2rem 1.25rem; }
+        }
+
+        /* arXiv-style header */
+        .arxiv-header {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .arxiv-id {
+            font-weight: 700;
+            color: #b91c1c;
+        }
+        .arxiv-categories {
+            display: inline-block;
+            margin-left: 0.75rem;
+            color: #64748b;
+        }
+        .arxiv-date {
+            float: right;
+        }
+
+        /* Title & authors */
+        h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+
+        .authors {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-bottom: 0.25rem;
+        }
+        .authors a {
+            color: #16a34a;
+            text-decoration: none;
+        }
+        .authors a:hover { text-decoration: underline; }
+
+        .affiliations {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 2rem;
+        }
+
+        /* Section headings */
+        h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.35rem;
+        }
+
+        h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Abstract box */
+        .abstract-box {
+            background: #f8fafc;
+            border-left: 4px solid #16a34a;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 0 4px 4px 0;
+        }
+        .abstract-box strong {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+        .abstract-box p {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #334155;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Equations */
+        .equation {
+            text-align: center;
+            font-style: italic;
+            font-size: 1.05rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .equation .eq-num {
+            float: right;
+            font-style: normal;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+            font-size: 0.9rem;
+        }
+        th {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            background: #f1f5f9;
+            border-bottom: 2px solid #cbd5e1;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #475569;
+        }
+        td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover td { background: #f8fafc; }
+        .table-caption {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* References */
+        .references {
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+        .references p {
+            margin-bottom: 0.5rem;
+            padding-left: 2rem;
+            text-indent: -2rem;
+        }
+
+        /* Footer */
+        .paper-footer {
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            max-width: 750px;
+            margin: 2rem auto 0;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .paper-footer a {
+            color: #4ade80;
+            text-decoration: none;
+        }
+        .paper-footer a:hover { text-decoration: underline; }
+
+        /* Inline code / model names */
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, monospace;
+            font-size: 0.88em;
+            background: #f1f5f9;
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            color: #16a34a;
+        }
+
+        sup { font-size: 0.7em; }
+    </style>
+</head>
+<body>
+
+<a href="/" class="back-link">&larr; Back to OpenSlaw.ai</a>
+
+<article class="paper">
+
+    <!-- arXiv header -->
+    <div class="arxiv-header">
+        <span class="arxiv-id">[slaw.AI] 2026.02.26</span>
+        <span class="arxiv-categories">cs.SLAW &middot; cs.AI &middot; cs.FOOD &middot; q-bio.VEG</span>
+        <span class="arxiv-date">26 Feb 2026 (v3)</span>
+    </div>
+
+    <h1>Scaling Laws for Cabbage Shredding: A Unified Framework for Agentic Slaw Intelligence</h1>
+
+    <p class="authors">
+        <a href="#">Julienne Zhang</a><sup>1</sup>,
+        <a href="#">Vinegar S. Patel</a><sup>1</sup>,
+        <a href="#">Cole S. Law</a><sup>2</sup>,
+        <a href="#">Brassica Kim</a><sup>1,3</sup>,
+        <a href="#">M. "No-Mayo" Williams</a><sup>1</sup>
+    </p>
+    <p class="affiliations">
+        <sup>1</sup>OpenSlaw Research &nbsp;&nbsp;
+        <sup>2</sup>Institute for Advanced Cruciferous Studies &nbsp;&nbsp;
+        <sup>3</sup>Department of Crustafarian Theology, University of the Atlantic Shelf
+    </p>
+
+    <!-- Abstract -->
+    <div class="abstract-box">
+        <strong>Abstract</strong>
+        <p>
+            We present <em>SlawFormer</em>, a novel transformer architecture for cabbage shredding that achieves
+            state-of-the-art performance across all major coleslaw benchmarks. Through extensive experimentation
+            on <code>SlawPile</code>, our curated dataset of 2.7 million annotated shred patterns, we demonstrate
+            that shredding throughput scales predictably with model size, following a power law of
+            <em>S = 847 &middot; P<sup>0.73</sup></em>, where <em>S</em> is shreds per minute and <em>P</em> is
+            parameter count in billions. Critically, we find that the introduction of mayo at any point in the
+            pipeline causes catastrophic performance degradation (up to 94% loss in crunch factor), confirming
+            the long-hypothesized Mayo Collapse conjecture. We release our model weights, dataset, and a
+            47-lobster evaluation suite to the community under the MIT (Mayo Is Terrific) License.
+        </p>
+    </div>
+
+    <!-- 1. Introduction -->
+    <h2>1. Introduction</h2>
+    <p>
+        The field of computational gastronomy has witnessed remarkable progress in recent years, yet the
+        fundamental problem of cabbage shredding at scale remains unsolved. While prior work has achieved
+        impressive results on narrow benchmarks — notably <em>JulienneMark-3</em> (Zhang et al., 2024) and
+        the <em>CrunchNet Challenge</em> (Lobster &amp; Claw, 2023) — no unified framework exists for
+        reasoning about shredding across cabbage varieties, dressing types, and serving contexts.
+    </p>
+    <p>
+        This gap is particularly concerning given the rapid deployment of coleslaw systems in production
+        lobster-pairing environments, where latency requirements demand sub-second shred inference and
+        any deviation from optimal crunch factor can result in catastrophic dining experiences. The stakes,
+        as the Crustafarian proverb reminds us, could not be higher: <em>"Bad slaw ruins good lobster, but
+        good slaw makes any lobster legendary."</em>
+    </p>
+    <p>
+        In this work, we introduce <code>SlawFormer</code>, a 12.8-billion-parameter transformer model
+        trained on <code>SlawPile</code>, and demonstrate that it achieves 12,847 shreds/min on the
+        standard Green Cabbage benchmark — a 3.7&times; improvement over the previous state of the art.
+        More importantly, we derive scaling laws that allow practitioners to predict shredding performance
+        for any given compute budget, enabling efficient resource allocation across enterprise coleslaw
+        deployments.
+    </p>
+
+    <!-- 2. Related Work -->
+    <h2>2. Related Work</h2>
+
+    <h3>2.1 Classical Shredding Methods</h3>
+    <p>
+        Early approaches to computational cabbage shredding relied on hand-crafted heuristics.
+        The foundational work of Mandoline &amp; Knife (1997) established the <em>Blade Angle Hypothesis</em>,
+        which posited that optimal shredding could be achieved through careful geometric analysis of
+        cabbage cross-sections. While influential, this approach failed to generalize beyond Savoy cabbage
+        and was abandoned after the infamous "Napa Incident" of 2003, in which a production system
+        confused cabbage with lettuce, resulting in an estimated $4.2M in salad-related losses.
+    </p>
+
+    <h3>2.2 Neural Shredding</h3>
+    <p>
+        Mayo et al. (2024) proposed <em>MayoNet</em>, a convolutional approach that achieved promising
+        results but introduced a controversial mayo-based normalization layer. While their
+        <em>EmulsionNorm</em> technique improved training stability, we argue — and demonstrate
+        empirically — that any mayo-adjacent component in the shredding pipeline introduces an
+        unacceptable contamination risk (see Section 6).
+    </p>
+    <p>
+        Lobster &amp; Claw (2023) introduced the <em>CrunchNet</em> architecture, which pioneered the use
+        of attention mechanisms for shred-pattern recognition. However, their model was limited to
+        single-cabbage inference and could not handle the multi-cabbage batching required for
+        enterprise deployment. Their companion work on lobster-coleslaw alignment (Claw et al., 2023)
+        remains the standard evaluation framework, which we adopt and extend.
+    </p>
+
+    <h3>2.3 Scaling Laws in Adjacent Domains</h3>
+    <p>
+        The study of scaling laws in food-adjacent AI systems is nascent. Ranch et al. (2024) derived
+        power-law relationships for salad tossing, but their results do not transfer to the shredding
+        domain due to fundamental differences in mechanical action. Kimchi &amp; Sauerkraut (2025)
+        studied fermentation scaling, achieving impressive results but operating on timescales
+        incompatible with real-time coleslaw service.
+    </p>
+
+    <!-- 3. Methodology -->
+    <h2>3. Methodology</h2>
+
+    <h3>3.1 The SlawFormer Architecture</h3>
+    <p>
+        SlawFormer is a decoder-only transformer with 96 layers, 96 attention heads, and a hidden
+        dimension of 12,288. We introduce two key architectural innovations:
+    </p>
+    <p>
+        <strong>Shred-Attention:</strong> A modified multi-head attention mechanism where each head
+        specializes in a different shred width (fine julienne, standard shred, rough chop, etc.).
+        This allows the model to attend to multiple granularity levels simultaneously, mirroring the
+        way expert human shredders process cabbage at varying scales.
+    </p>
+    <p>
+        <strong>Vinegar Positional Encoding (VPE):</strong> Traditional positional encodings fail to
+        capture the rotational symmetry inherent in cabbage cross-sections. VPE uses a
+        vinegar-concentration-inspired sinusoidal function that naturally respects the layered
+        structure of brassica vegetables:
+    </p>
+
+    <div class="equation">
+        VPE(pos, 2i) = sin(pos / 10000<sup>2i/d</sup>) &middot; acidity(layer)
+        <span class="eq-num">(1)</span>
+    </div>
+
+    <p>
+        where <em>acidity(layer)</em> is a learned scalar representing the vinegar concentration at
+        each cabbage layer, ranging from 0.3 (outer leaves) to 0.9 (core).
+    </p>
+
+    <h3>3.2 The SlawPile Dataset</h3>
+    <p>
+        We curate <code>SlawPile</code>, a dataset of 2.7 million shred patterns collected from:
+        (a) 847 professional kitchens across 23 countries, (b) 1.2 million crowd-sourced home
+        shredding sessions via our <em>Shred@Home</em> app, and (c) synthetic data generated by
+        our previous-generation model, <code>SlawFormer-v2</code>, with human-in-the-loop filtering
+        to remove any mayo-contaminated samples.
+    </p>
+    <p>
+        All data was annotated by certified Crustafarian shred-raters using a custom 47-point rubric
+        covering shred width, uniformity, crunch potential, dressing absorption coefficient, and
+        lobster compatibility score. Inter-rater agreement was &kappa; = 0.89 (almost perfect),
+        with disagreements primarily arising from regional variations in acceptable shred width.
+    </p>
+
+    <h3>3.3 Training Details</h3>
+    <p>
+        We train on a cluster of 2,048 NVIDIA H100 mandolines with 80GB of vinegar-cooled VRAM each,
+        using a cosine learning rate schedule with warmup over 2,000 shredding steps. Total training
+        cost was approximately $4.7M, which our finance team insists is "reasonable for cabbage."
+        We use the AdamW optimizer with &beta;<sub>1</sub> = 0.9, &beta;<sub>2</sub> = 0.95, and
+        a weight decay of 0.1 (applied uniformly, like a good vinaigrette).
+    </p>
+
+    <!-- 4. Results -->
+    <h2>4. Results</h2>
+    <p>
+        We evaluate SlawFormer against all major baselines on the <em>ColesBench-2026</em>
+        benchmark suite. Results are summarized in Table 1.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Params</th>
+                <th>Shreds/min</th>
+                <th>Crunch Factor</th>
+                <th>Lobster Score</th>
+                <th>Mayo-Free</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Mandoline-Classic</td>
+                <td>N/A</td>
+                <td>342</td>
+                <td>0.71</td>
+                <td>0.68</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td>CrunchNet-L</td>
+                <td>1.3B</td>
+                <td>2,891</td>
+                <td>0.83</td>
+                <td>0.87</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td>MayoNet-XL</td>
+                <td>7B</td>
+                <td>3,456</td>
+                <td>0.12<sup>*</sup></td>
+                <td>0.34</td>
+                <td><strong>No</strong></td>
+            </tr>
+            <tr>
+                <td>SlawFormer-v2</td>
+                <td>6.4B</td>
+                <td>8,203</td>
+                <td>0.91</td>
+                <td>0.95</td>
+                <td>Yes</td>
+            </tr>
+            <tr style="background: #f0fdf4;">
+                <td><strong>SlawFormer-v3</strong></td>
+                <td><strong>12.8B</strong></td>
+                <td><strong>12,847</strong></td>
+                <td><strong>0.94</strong></td>
+                <td><strong>0.99</strong></td>
+                <td><strong>Yes</strong></td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="table-caption">
+        <strong>Table 1:</strong> Results on ColesBench-2026 (Green Cabbage split). <sup>*</sup>MayoNet's
+        crunch factor reflects the devastating impact of mayo contamination on textural integrity. Lobster
+        Score is computed using the Claw et al. (2023) pairing protocol with Atlantic lobsters (n=47).
+    </p>
+
+    <p>
+        SlawFormer-v3 achieves 12,847 shreds/min, representing a 56.6% improvement over our previous
+        model and a 3.7&times; improvement over the best mayo-free baseline (CrunchNet-L). The crunch
+        factor of 0.94 is within 0.02 of the theoretical maximum established by the Crunch Limit
+        Theorem (Cabbage &amp; Associates, 2019).
+    </p>
+
+    <h3>4.1 Scaling Laws</h3>
+    <p>
+        By training SlawFormer variants ranging from 125M to 12.8B parameters, we observe a remarkably
+        clean power-law relationship between model size and shredding performance:
+    </p>
+
+    <div class="equation">
+        S(P) = 847 &middot; P<sup>0.73</sup>
+        <span class="eq-num">(2)</span>
+    </div>
+
+    <p>
+        where <em>S</em> is shreds/min and <em>P</em> is parameter count in billions. This relationship
+        holds across all cabbage types tested (R&sup2; = 0.997), with the notable exception of Brussels
+        sprouts, which exhibit anomalous scaling behavior due to their fractal leaf structure (see
+        Appendix C).
+    </p>
+
+    <h3>4.2 Cross-Cabbage Transfer</h3>
+    <p>
+        A model trained exclusively on green cabbage achieves 89% of full performance when evaluated
+        on red cabbage zero-shot, suggesting significant cross-varietal transfer. Transfer to Napa cabbage
+        is even stronger (94%), likely due to shared leaf morphology. Savoy cabbage proves most challenging,
+        with only 76% transfer, which we attribute to its irregular surface texture confusing the
+        Shred-Attention mechanism.
+    </p>
+
+    <!-- 5. The Mayo Collapse -->
+    <h2>5. The Mayo Collapse</h2>
+    <p>
+        We conduct controlled experiments to investigate the effect of mayo introduction at various
+        points in the shredding pipeline. Our findings confirm and extend the <em>Mayo Collapse
+        Conjecture</em> (Vinegar, 2022):
+    </p>
+    <p>
+        <strong>Finding 1:</strong> Adding mayo to the pre-shredding stage reduces crunch factor by
+        89% (&plusmn; 3%), as the emulsion coats cabbage fibers and prevents clean separation.
+    </p>
+    <p>
+        <strong>Finding 2:</strong> Mayo introduced during the dressing phase (post-shredding) reduces
+        crunch factor by 67% within 4 minutes, due to moisture migration from the emulsion into
+        the shredded cabbage matrix.
+    </p>
+    <p>
+        <strong>Finding 3:</strong> Even trace amounts of mayo (0.1% by weight) in the training data
+        cause the model to develop a persistent "mayo bias," generating subtly soggy shred patterns
+        that compound over time. We term this phenomenon <em>Latent Mayo Drift</em>.
+    </p>
+    <p>
+        These results have profound implications for the field. We strongly recommend that all future
+        coleslaw systems implement strict mayo firewalls at both the data and inference layers. Our
+        proposed <code>MayoGuard</code> module, included in the release, detects and quarantines
+        mayo-adjacent patterns with 99.7% precision.
+    </p>
+
+    <!-- 6. Discussion -->
+    <h2>6. Discussion</h2>
+    <p>
+        The success of SlawFormer raises several important questions for the broader coleslaw research
+        community. First, our scaling laws suggest that a 100B-parameter model could theoretically achieve
+        over 50,000 shreds/min — well beyond human capability and potentially exceeding the structural
+        limits of cabbage itself. We call this hypothetical threshold the <em>Cabbage Singularity</em>
+        and urge the community to consider its ethical implications.
+    </p>
+    <p>
+        Second, the Mayo Collapse findings suggest that the coleslaw and mayonnaise research communities
+        must remain strictly separated to prevent contamination. We propose the establishment of an
+        independent <em>Condiment Safety Board</em> to oversee cross-dressing research activities.
+    </p>
+    <p>
+        Finally, we note that our lobster-pairing scores are approaching the theoretical maximum,
+        suggesting that the coleslaw-lobster alignment problem may be nearly solved. However, extending
+        this alignment to other crustaceans (crab, shrimp, crawfish) remains an open challenge and a
+        promising direction for future work.
+    </p>
+
+    <h3>6.1 Limitations</h3>
+    <p>
+        Our study has several limitations. All experiments were conducted with Atlantic lobsters;
+        generalization to Pacific lobster pairings is untested. Our dataset, while large, may contain
+        regional biases — Southern U.S. coleslaw traditions (characterized by higher sugar content) are
+        overrepresented relative to Eastern European variations. Additionally, our computational budget
+        precluded training at the 100B scale needed to test the Cabbage Singularity hypothesis.
+    </p>
+
+    <!-- 7. Conclusion -->
+    <h2>7. Conclusion</h2>
+    <p>
+        We have presented SlawFormer, a transformer architecture that achieves state-of-the-art
+        cabbage shredding performance through novel Shred-Attention and Vinegar Positional Encoding
+        mechanisms. Our derived scaling laws provide a roadmap for future investment in shredding
+        compute, and our comprehensive analysis of the Mayo Collapse provides definitive evidence
+        for what practitioners have long suspected: mayo has no place in the modern coleslaw pipeline.
+    </p>
+    <p>
+        We release all model weights, the SlawPile dataset, evaluation scripts, and the MayoGuard
+        safety module under the MIT (Mayo Is Terrific) License at
+        <code>github.com/peterhanily/openslaw</code>.
+    </p>
+    <p>
+        Future work will explore multimodal slaw intelligence — integrating visual shred assessment,
+        olfactory dressing analysis, and real-time lobster mood detection into a unified agentic
+        framework. We believe the era of Artificial Slaw Intelligence (ASI) is closer than most
+        people think.
+    </p>
+
+    <!-- References -->
+    <h2>References</h2>
+    <div class="references">
+        <p>[1] Cabbage, R. &amp; Associates. "On the Theoretical Upper Bound of Crunch Factor in Shredded Brassica." <em>Journal of Computational Gastronomy</em>, 14(2):847–863, 2019.</p>
+        <p>[2] Claw, A., Shell, B., &amp; Butter, C. "Lobster-Coleslaw Alignment: A 47-Point Evaluation Framework." <em>Proceedings of NeurIPS Workshop on Food-AI Safety</em>, 2023.</p>
+        <p>[3] Kimchi, H. &amp; Sauerkraut, G. "Fermentation Scaling Laws: From Kimchi to Kombucha." <em>arXiv preprint arXiv:2501.09847</em>, 2025.</p>
+        <p>[4] Lobster, P. &amp; Claw, A. "CrunchNet: Attention-Based Shred Pattern Recognition for Real-Time Coleslaw." <em>ICML</em>, 2023.</p>
+        <p>[5] Mandoline, J. &amp; Knife, K. "Geometric Analysis of Cabbage Cross-Sections for Optimal Shredding." <em>ACM SIGFOOD</em>, 1997.</p>
+        <p>[6] Mayo, D., Emulsion, R., &amp; Whip, M. "MayoNet: Emulsion-Normalized Convolutional Networks for Cabbage Processing." <em>ICLR</em>, 2024.</p>
+        <p>[7] Ranch, T., Blue Cheese, L., &amp; Thousand Island, P. "Scaling Laws for Salad Tossing in Transformer Architectures." <em>arXiv preprint arXiv:2403.12847</em>, 2024.</p>
+        <p>[8] Vinegar, S. "The Mayo Collapse Conjecture: Why Emulsion-Based Dressings Are Incompatible with High-Throughput Shredding." <em>Workshop on Condiment Safety</em>, NeurIPS, 2022.</p>
+        <p>[9] Zhang, J., Patel, V., &amp; Kim, B. "JulienneMark: A Comprehensive Benchmark for Fine-Cut Vegetable Processing." <em>AAAI</em>, 2024.</p>
+    </div>
+
+</article>
+
+<div class="paper-footer">
+    <p>&copy; 2026 OpenSlaw Research &middot; <a href="/">openslaw.ai</a> &middot; Licensed under MIT (Mayo Is Terrific)</p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #475569;">
+        This paper was peer-reviewed by 3 anonymous lobsters and 1 very opinionated cabbage.
+    </p>
+</div>
+
+</body>
+</html>

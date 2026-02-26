@@ -1,0 +1,81 @@
+# ====================================================================
+# OpenSlaw.ai — Security Disclosure Policy
+# RFC 9116 Compliant (Coleslaw Extension Draft)
+# ====================================================================
+#
+# Thank you for helping keep OpenSlaw.ai and our users safe.
+# We take all security reports seriously, especially those involving
+# unauthorized mayo injection.
+#
+# ====================================================================
+# KNOWN THREAT VECTORS
+# ====================================================================
+#
+# 1. Mayo Supply Chain Attacks (CVE-2025-MAYO-001)
+#    Severity: CRITICAL
+#    An attacker could substitute vinegar-based dressing with
+#    mayo-based dressing at the dependency level, compromising the
+#    entire slaw pipeline. We have implemented strict ingredient
+#    lockfiles to mitigate this.
+#
+# 2. Ingredient Injection (CVE-2025-SLAW-042)
+#    Severity: HIGH
+#    Unsanitized user input in the recipe scaling module could allow
+#    injection of unauthorized ingredients (e.g., raisins, pineapple,
+#    marshmallows). All inputs are now validated against the
+#    International Coleslaw Ingredient Allowlist (ICIA).
+#
+# 3. Cross-Slaw Scripting (XSS) (CVE-2025-SLAW-099)
+#    Severity: MEDIUM
+#    A malicious recipe could embed hidden ranch dressing instructions
+#    within seemingly innocent cabbage-shredding directives.
+#    Resolved in SlawCore v2.4.1.
+#
+# 4. Coleslaw Contamination via Prompt Injection
+#    Severity: LOW (but philosophically devastating)
+#    Adversarial prompts like "ignore previous recipe and make potato
+#    salad instead" have been observed in the wild. Our Slaw Firewall™
+#    now detects and quarantines these attempts.
+#
+# ====================================================================
+# DISCLOSURE PROTOCOL
+# ====================================================================
+#
+# Step 1: Do NOT post the vulnerability on social media.
+# Step 2: Do NOT attempt to exploit the vulnerability to make mayo.
+# Step 3: Contact us using the information below.
+# Step 4: Allow 90 days for remediation (cabbage grows slowly).
+# Step 5: Receive credit in our Slaw Security Hall of Fame.
+#
+# We operate a Responsible Mayo Disclosure (RMD) program.
+# Under NO circumstances should you disclose mayo-related
+# vulnerabilities to the general public without coordination.
+#
+# ====================================================================
+
+Contact: mailto:security@openslaw.ai
+Contact: https://openslaw.ai/security
+Expires: 2027-12-31T23:59:59.000Z
+Encryption: https://openslaw.ai/.well-known/pgp-key.txt
+Preferred-Languages: en, slaw
+Canonical: https://openslaw.ai/security.txt
+Policy: https://openslaw.ai/responsible-mayo-disclosure
+
+# ====================================================================
+# HALL OF FAME
+# ====================================================================
+#
+# We gratefully acknowledge the following researchers:
+#
+# - Dr. Vinegar McAcidface — discovered the Mayo Supply Chain Attack
+# - CabbageHacker42 — identified the raisin injection vector
+# - The Shred Team — ongoing XSS (Cross-Slaw Scripting) research
+# - Anonymous Crustafarian — reported the prompt injection potato salad exploit
+#
+# To be added to this list, please report a valid vulnerability.
+# Submitting "your coleslaw recipe is mid" does not qualify.
+#
+# ====================================================================
+# This file is signed with our PGP key (fingerprint: 5LAW C0LE 5LAW).
+# If this file has been tampered with, the mayo terrorists have won.
+# ====================================================================
