@@ -201,7 +201,7 @@
             [0,1,1,1,1,0,1,1,1,0,0,0,0,0,1,1,1,0,1,1,1,1,0],
             [0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0],
             [0,0,0,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,0,0,0],
-            [0,0,0,0,1,0,1,0,0,0,2,0,2,0,0,0,1,0,1,0,0,0,0],
+            [0,0,0,0,1,0,1,0,0,0,2,2,2,0,0,0,1,0,1,0,0,0,0],
             [1,1,1,1,1,1,1,0,2,2,2,2,2,2,2,0,1,1,1,1,1,1,1],
             [0,0,0,0,1,0,1,0,2,2,2,2,2,2,2,0,1,0,1,0,0,0,0],
             [0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0],
@@ -212,7 +212,7 @@
             [0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0],
             [0,1,1,1,1,0,1,1,1,0,0,0,0,0,1,1,1,0,1,1,1,1,0],
             [0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0],
-            [0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0],
+            [0,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,0],
             [0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0],
             [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
             [0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0],
@@ -678,7 +678,7 @@
                 if (fruitSpawned < 2 && dotsEaten > totalDots * (fruitSpawned === 0 ? 0.3 : 0.6) && !fruit) {
                     var ingIdx = Math.min(level - 1, INGREDIENTS.length - 1);
                     fruit = {
-                        col: 11, row: 14,
+                        col: 11, row: 13,
                         emoji: INGREDIENTS[ingIdx].emoji,
                         pts: INGREDIENTS[ingIdx].pts,
                         timer: 8000
@@ -1345,7 +1345,14 @@
         document.addEventListener('keydown', function(e) {
             if (dirMap[e.key] !== undefined) {
                 e.preventDefault();
-                if (state === PLAYING) player.nextDir = dirMap[e.key];
+                if (state === PLAYING) {
+                    var newDir = dirMap[e.key];
+                    if (newDir === (player.dir + 2) % 4) {
+                        player.dir = newDir;
+                        player.moveTimer = 999;
+                    }
+                    player.nextDir = newDir;
+                }
             }
             if (e.key === ' ' || e.code === 'Space') {
                 e.preventDefault();
@@ -1364,6 +1371,10 @@
             function handle(e) {
                 e.preventDefault();
                 if (state === PLAYING) {
+                    if (dir === (player.dir + 2) % 4) {
+                        player.dir = dir;
+                        player.moveTimer = 999;
+                    }
                     player.nextDir = dir;
                 } else if (state === MENU) {
                     initGame();
@@ -1394,10 +1405,18 @@
             var dx = t.clientX - touchStartX;
             var dy = t.clientY - touchStartY;
             var threshold = 20;
+            var newDir = -1;
             if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
-                player.nextDir = dx > 0 ? 0 : 2;
+                newDir = dx > 0 ? 0 : 2;
             } else if (Math.abs(dy) > threshold) {
-                player.nextDir = dy > 0 ? 1 : 3;
+                newDir = dy > 0 ? 1 : 3;
+            }
+            if (newDir >= 0) {
+                if (newDir === (player.dir + 2) % 4) {
+                    player.dir = newDir;
+                    player.moveTimer = 999;
+                }
+                player.nextDir = newDir;
             }
         }, { passive: true });
 
