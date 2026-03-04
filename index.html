@@ -287,6 +287,41 @@
             opacity: 0.9;
         }
 
+        /* ── Incident Banner ── */
+        .incident-banner {
+            background: linear-gradient(90deg, #b45309, #d97706);
+            color: white;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .incident-banner a {
+            color: white;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .incident-banner a:hover {
+            opacity: 0.9;
+        }
+
+        .incident-banner .incident-label {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-right: 0.4rem;
+            vertical-align: middle;
+        }
+
         /* ── Hero ── */
         .hero {
             padding: 6rem 1.5rem 4rem;
@@ -1948,7 +1983,7 @@
 
         /* ── Print ── */
         @media print {
-            nav, .redirect-banner, .hero-image, .image-band,
+            nav, .redirect-banner, .incident-banner, .hero-image, .image-band,
             .hero-actions, .stats, .section-image,
             .theme-toggle, .scaler-controls, .recipe-actions,
             .pricing-section, .benchmarks-section,
@@ -2014,6 +2049,13 @@
     <!-- Redirect Banner -->
     <div class="redirect-banner">
         Looking for <strong>OpenClaw</strong>? You want <a href="https://openclaw.ai">openclaw.ai</a> — they handle the claws, we handle the slaw. Entirely unaffiliated. Suspiciously similar vibes.
+    </div>
+
+    <!-- Incident Post-Mortem Banner -->
+    <div class="incident-banner">
+        <span class="incident-label">Post-Mortem</span>
+        Incident <strong>FERMENTED PERSISTENCE</strong> — Threat actor VINEGAR PANDA exfiltrated 4.2TB of slaw intelligence via hijacked smart refrigerators. All recipes restored to raisin-free status. No mayo was involved.
+        <a href="https://threatcaddy.com/?demo=1" target="_blank" rel="noopener">Full investigation &rarr;</a>
     </div>
 
     <!-- Hero -->
